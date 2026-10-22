@@ -1,0 +1,2916 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRMS - Crime Report Management System</title>
+    <meta name="description"
+        content="Advanced Crime Report Management System for law enforcement. Manage cases, criminals, officers, and secure communications.">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bs-body-font-family: 'Inter', sans-serif;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --surface: rgba(30, 32, 48, 0.85);
+            --surface-hover: rgba(40, 44, 68, 0.95);
+            --cyan: #22d3ee;
+            --emerald: #34d399;
+            --amber: #fbbf24;
+            --rose: #fb7185;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0f1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== Animated Background ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(34, 211, 238, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 80%, rgba(251, 113, 133, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            animation: bgPulse 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgPulse {
+            0% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 3px;
+        }
+
+        /* ===== LOGIN PAGE ===== */
+        #loginPage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .login-header h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.75rem;
+        }
+
+        .login-header p {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .login-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.25rem;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .login-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px var(--accent-glow);
+        }
+
+        .login-card .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .login-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .login-card p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* ===== GLASS MODAL ===== */
+        .modal-content {
+            background: rgba(20, 22, 38, 0.97) !important;
+            border: 1px solid rgba(99, 102, 241, 0.2) !important;
+            border-radius: 1.25rem !important;
+            backdrop-filter: blur(24px);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.5rem 1.75rem;
+        }
+
+        .modal-header .modal-title {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .modal-body {
+            padding: 1.75rem;
+        }
+
+        .form-control,
+        .form-select {
+            background: rgba(15, 15, 26, 0.8) !important;
+            border: 1px solid rgba(100, 100, 160, 0.3) !important;
+            color: #e2e8f0 !important;
+            border-radius: 0.75rem !important;
+            padding: 0.85rem 1rem !important;
+            font-size: 0.95rem !important;
+            transition: all 0.3s !important;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 3px var(--accent-glow) !important;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--accent-glow);
+            color: white;
+        }
+
+        .btn-glow-danger {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 0.75rem;
+        }
+
+        .btn-glow-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+            color: white;
+        }
+
+        .btn-glow-success {
+            background: linear-gradient(135deg, #10b981, #22d3ee);
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 0.75rem;
+        }
+
+        .btn-glow-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .btn-glow-warning {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            border: none;
+            color: #1e1e2e;
+            font-weight: 600;
+            border-radius: 0.75rem;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 270px;
+            background: rgba(12, 14, 26, 0.98);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .sidebar-brand {
+            padding: 1.75rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: center;
+        }
+
+        .sidebar-brand h4 {
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .sidebar-brand small {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .sidebar-user {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-user .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .sidebar-user .user-meta h6 {
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+            color: #e2e8f0;
+        }
+
+        .sidebar-user .user-meta small {
+            color: #64748b;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .sidebar-nav .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0.85rem 1.5rem;
+            color: #94a3b8;
+            font-size: 0.92rem;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            transition: all 0.25s;
+            text-decoration: none;
+        }
+
+        .sidebar-nav .nav-link:hover {
+            background: rgba(99, 102, 241, 0.08);
+            color: #e2e8f0;
+            border-left-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .sidebar-nav .nav-link.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .sidebar-nav .nav-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.05rem;
+        }
+
+        .sidebar-footer {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-left: 270px;
+            padding: 2rem 2.5rem;
+            min-height: 100vh;
+            transition: margin-left 0.35s;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-header h2 i {
+            color: var(--accent);
+        }
+
+        .page-header .datetime {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* ===== STAT CARDS ===== */
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            opacity: 0.08;
+            transform: translate(30%, -30%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card h6 {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .progress {
+            height: 5px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+        }
+
+        /* ===== GLASS CARD ===== */
+        .glass-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.15);
+        }
+
+        /* ===== TABLES ===== */
+        .table-dark-custom {
+            --bs-table-bg: transparent;
+            --bs-table-border-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .table-dark-custom thead th {
+            background: rgba(99, 102, 241, 0.12);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+            padding: 1rem;
+        }
+
+        .table-dark-custom tbody td {
+            padding: 0.9rem 1rem;
+            font-size: 0.92rem;
+            vertical-align: middle;
+        }
+
+        .table-dark-custom tbody tr {
+            transition: background 0.2s;
+        }
+
+        .table-dark-custom tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* ===== STATUS BADGES ===== */
+        .badge-solved {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--emerald);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+        }
+
+        .badge-pending {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--amber);
+            border: 1px solid rgba(251, 191, 36, 0.25);
+        }
+
+        .badge-active {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--emerald);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+        }
+
+        .badge-inactive {
+            background: rgba(251, 113, 133, 0.15);
+            color: var(--rose);
+            border: 1px solid rgba(251, 113, 133, 0.25);
+        }
+
+        .badge-wanted {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .badge-success-custom {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--emerald);
+        }
+
+        .badge-failed-custom {
+            background: rgba(251, 113, 133, 0.15);
+            color: var(--rose);
+        }
+
+        /* ===== QUICK ACTION CARDS ===== */
+        .quick-action {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 1.75rem 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.35s;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25), 0 0 24px var(--accent-glow);
+        }
+
+        .quick-action i {
+            font-size: 2rem;
+            margin-bottom: 0.85rem;
+            display: block;
+        }
+
+        .quick-action h6 {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .quick-action small {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        /* ===== CRIMINAL CARDS ===== */
+        .criminal-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .criminal-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .criminal-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        /* ===== STATION CARDS (Secure Chat) ===== */
+        .station-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .station-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.online {
+            background: var(--emerald);
+            box-shadow: 0 0 8px var(--emerald);
+        }
+
+        .status-dot.offline {
+            background: var(--rose);
+        }
+
+        /* ===== CHATBOT ===== */
+        .chatbot-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 1060;
+            box-shadow: 0 8px 24px var(--accent-glow);
+            transition: all 0.3s;
+        }
+
+        .chatbot-fab:hover {
+            transform: scale(1.1);
+        }
+
+        .chatbot-panel {
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 380px;
+            max-height: 500px;
+            background: rgba(15, 15, 26, 0.98);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 1.25rem;
+            display: none;
+            flex-direction: column;
+            z-index: 1060;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .chatbot-panel.show {
+            display: flex;
+        }
+
+        .chatbot-panel .chat-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-panel .chat-header h6 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .chatbot-panel .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 1.25rem;
+            max-height: 340px;
+        }
+
+        .chat-msg {
+            padding: 0.65rem 1rem;
+            border-radius: 0.85rem;
+            margin-bottom: 0.65rem;
+            font-size: 0.88rem;
+            max-width: 85%;
+            line-height: 1.5;
+        }
+
+        .chat-msg.bot {
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            align-self: flex-start;
+        }
+
+        .chat-msg.user {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+            margin-left: auto;
+        }
+
+        .chatbot-panel .chat-input {
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chatbot-panel .chat-input input {
+            flex: 1;
+            background: rgba(30, 32, 48, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.65rem;
+            padding: 0.6rem 1rem;
+            color: #e2e8f0;
+            font-size: 0.88rem;
+        }
+
+        .chatbot-panel .chat-input input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .chatbot-panel .chat-input button {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border: none;
+            color: white;
+            border-radius: 0.65rem;
+            width: 42px;
+            cursor: pointer;
+        }
+
+        /* ===== TOAST/NOTIFICATION ===== */
+        .crms-toast {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            min-width: 340px;
+            max-width: 420px;
+            border-radius: 0.85rem;
+            padding: 1rem 1.25rem;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .crms-toast.show {
+            transform: translateX(0);
+        }
+
+        .crms-toast.toast-info {
+            background: rgba(99, 102, 241, 0.9);
+        }
+
+        .crms-toast.toast-success {
+            background: rgba(16, 185, 129, 0.9);
+        }
+
+        .crms-toast.toast-warning {
+            background: rgba(245, 158, 11, 0.9);
+            color: #1a1a2e;
+        }
+
+        .crms-toast.toast-danger {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .crms-toast .toast-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .crms-toast .toast-msg {
+            font-size: 0.88rem;
+            opacity: 0.9;
+        }
+
+        /* ===== SETTINGS SWITCH ===== */
+        .form-check-input:checked {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .setting-row {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        /* ===== FACE SEARCH UPLOAD ===== */
+        .face-upload {
+            border: 2px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .face-upload:hover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* ===== CONTENT SECTIONS ===== */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.35s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== CALL MODAL ===== */
+        .pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            opacity: 0;
+            animation: pulse 2s infinite;
+        }
+
+        .pulse-ring:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .pulse-ring:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1060;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+                padding: 1.25rem;
+                padding-top: 4.5rem;
+            }
+
+            .mobile-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .chatbot-panel {
+                width: 92vw;
+                right: 4vw;
+            }
+        }
+
+        /* ===== CHART CONTAINER ===== */
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        /* ===== NOTIFICATION BELL ===== */
+        .bell-btn {
+            position: relative;
+            background: rgba(30, 32, 48, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .bell-btn:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent);
+        }
+
+        .bell-btn .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            font-size: 0.65rem;
+        }
+
+        /* ===== SECURE BADGE ===== */
+        .secure-badge {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--emerald);
+            padding: 0.35rem 0.85rem;
+            border-radius: 2rem;
+            font-size: 0.78rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ====== TOAST NOTIFICATION ====== -->
+    <div class="crms-toast" id="crmsToast">
+        <div class="toast-title" id="toastTitle">Notification</div>
+        <div class="toast-msg" id="toastMsg">Message here</div>
+    </div>
+
+    <!-- ====== LOGIN PAGE ====== -->
+    <div id="loginPage">
+        <div class="login-header">
+            <h1><i class="fas fa-shield-alt me-2"></i>CRMS</h1>
+            <p>Crime Report Management System — Secure, Fast, Reliable law enforcement dashboard</p>
+        </div>
+
+        <div class="d-flex gap-4 flex-wrap justify-content-center mb-4">
+            <div class="login-card" id="adminLoginBtn">
+                <div class="icon-wrapper" style="background: linear-gradient(135deg, var(--accent), #8b5cf6);">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h3>Admin</h3>
+                <p>Full system access, officer management, settings</p>
+            </div>
+            <div class="login-card" id="officerLoginBtn">
+                <div class="icon-wrapper" style="background: linear-gradient(135deg, var(--rose), #f97316);">
+                    <i class="fas fa-id-badge"></i>
+                </div>
+                <h3>Officer</h3>
+                <p>Case management, FIR filing, criminal records</p>
+            </div>
+        </div>
+
+        <a href="#" class="text-decoration-none" style="color: var(--accent);" id="forgotPasswordBtn">
+            <i class="fas fa-key me-1"></i> Forgot Password?
+        </a>
+    </div>
+
+    <!-- ====== LOGIN MODALS ====== -->
+    <!-- Admin Login -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-shield me-2"></i>Admin Login</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="adminLoginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="adminEmail" placeholder="admin@crms.gov"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" id="adminUsername" placeholder="Enter username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="adminPassword" placeholder="Enter password"
+                                required>
+                        </div>
+                        <button type="submit" class="btn btn-accent w-100 py-3"><i
+                                class="fas fa-sign-in-alt me-2"></i>Login as Admin</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Officer Login -->
+    <div class="modal fade" id="officerLoginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-id-badge me-2"></i>Officer Login</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="officerLoginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="officerEmail" placeholder="officer@crms.gov"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="officerPassword"
+                                placeholder="Enter password" required>
+                        </div>
+                        <button type="submit" class="btn btn-accent w-100 py-3"><i
+                                class="fas fa-sign-in-alt me-2"></i>Login as Officer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-key me-2"></i>Reset Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="forgotPasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="resetEmail" placeholder="Enter your email"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Account Type</label>
+                            <select class="form-select" id="userType">
+                                <option value="admin">Admin</option>
+                                <option value="officer">Officer</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-accent w-100 py-3"><i
+                                class="fas fa-paper-plane me-2"></i>Send Reset Link</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== FIR MODAL ====== -->
+    <div class="modal fade" id="firModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-signature me-2"></i>Register New FIR</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="firForm">
+                        <h6 class="text-muted mb-3"><i class="fas fa-exclamation-triangle me-1"></i> Incident Details
+                        </h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Crime Type *</label>
+                                <select class="form-select" id="crimeType" required>
+                                    <option value="">Select crime type</option>
+                                    <option>Murder</option>
+                                    <option>Manslaughter</option>
+                                    <option>Assault</option>
+                                    <option>Battery</option>
+                                    <option>Rape</option>
+                                    <option>Robbery</option>
+                                    <option>Kidnapping</option>
+                                    <option>Domestic Violence</option>
+                                    <option>Identity Theft</option>
+                                    <option>Hacking</option>
+                                    <option>Online Fraud</option>
+                                    <option>Child Pornography</option>
+                                    <option>Cyber Flashing</option>
+                                    <option>Burglary</option>
+                                    <option>Theft</option>
+                                    <option>Motor Vehicle Theft</option>
+                                    <option>Arson</option>
+                                    <option>Vandalism</option>
+                                    <option>Criminal Damage</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Crime *</label>
+                                <input type="date" class="form-control" id="crimeDate" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Location *</label>
+                                <input type="text" class="form-control" id="crimeLocation"
+                                    placeholder="Where the crime occurred" required>
+                            </div>
+                            <div class="col-12">
+                                <div class="alert alert-info py-2 px-3 mb-0"
+                                    style="background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.2); color: #94a3b8;">
+                                    <small><strong>Applicable Section:</strong> <span id="applicableSection">Select
+                                            crime type to see applicable section</span></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="text-muted mb-3"><i class="fas fa-user me-1"></i> Complainer Details</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="complainerName"
+                                    placeholder="Enter complainer's name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Aadhar Number *</label>
+                                <input type="text" class="form-control" id="complainerAadhar"
+                                    placeholder="XXXX XXXX XXXX" required maxlength="14">
+                            </div>
+                        </div>
+
+                        <h6 class="text-muted mb-3"><i class="fas fa-user-secret me-1"></i> Criminal Details (if known)
+                        </h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" id="criminalName"
+                                    placeholder="Enter criminal's name">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control" id="criminalAge" placeholder="Age">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Gender</label>
+                                <select class="form-select" id="criminalGender">
+                                    <option value="">Select</option>
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Occupation</label>
+                                <input type="text" class="form-control" id="criminalOccupation"
+                                    placeholder="Occupation">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Address</label>
+                                <input type="text" class="form-control" id="criminalAddress"
+                                    placeholder="Last known address">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 flex-wrap">
+                            <button type="submit" class="btn btn-accent flex-fill py-3"><i
+                                    class="fas fa-check-circle me-2"></i>Register FIR</button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill py-3" id="cancelFirBtn"><i
+                                    class="fas fa-times me-2"></i>Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== FILTER MODAL ====== -->
+    <div class="modal fade" id="filterCasesModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-filter me-2"></i>Filter Cases</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterCasesForm">
+                        <div class="mb-3">
+                            <label class="form-label">Case ID</label>
+                            <input type="text" class="form-control" id="filterCaseId" placeholder="e.g. CR-2023-001">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Crime Type</label>
+                            <select class="form-select" id="filterCrimeType">
+                                <option value="">All Types</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Criminal Name</label>
+                            <input type="text" class="form-control" id="filterCriminalName"
+                                placeholder="Search by name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="filterDate">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="filterStatus">
+                                <option value="">All</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Solved">Solved</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-accent flex-fill"><i
+                                    class="fas fa-search me-2"></i>Apply Filter</button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill" id="clearFilterBtn"><i
+                                    class="fas fa-eraser me-2"></i>Clear</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SECURE CALL MODAL ====== -->
+    <div class="modal fade" id="secureCallModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content text-center">
+                <div class="modal-body py-5">
+                    <div class="secure-badge mb-3 mx-auto" style="width: fit-content;"><i class="fas fa-shield-alt"></i>
+                        End-to-End Encrypted</div>
+                    <div class="position-relative mx-auto mb-4" style="width: 110px; height: 110px;">
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="d-flex align-items-center justify-content-center rounded-circle position-relative"
+                            style="width: 90px; height: 90px; background: linear-gradient(135deg, var(--accent), var(--cyan)); font-size: 2rem; color: white; z-index: 2; margin: 10px;">
+                            <span id="callAvatarIcon">M</span>
+                        </div>
+                    </div>
+                    <h5 id="callNameDisplay" class="mb-1">Station Name</h5>
+                    <p class="text-muted mb-2" id="callNumberDisplay">+91 XXXXX XXXXX</p>
+                    <p style="color: var(--cyan); animation: blink 1.5s infinite;"><i class="fas fa-phone-alt me-1"></i>
+                        Calling...</p>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <button class="btn rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 55px; height: 55px; background: rgba(255,255,255,0.08);" title="Mute"><i
+                                class="fas fa-microphone-slash"></i></button>
+                        <button class="btn rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 55px; height: 55px; background: var(--rose);" data-bs-dismiss="modal"
+                            title="End Call"><i class="fas fa-phone-slash"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secure SMS Modal -->
+    <div class="modal fade" id="secureSmsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color: var(--amber);"><i class="fas fa-comment-alt me-2"></i>Secure
+                        SMS</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="secure-badge mb-3"><i class="fas fa-shield-alt"></i> Logged & Encrypted</div>
+                    <form id="smsForm">
+                        <div class="mb-3">
+                            <label class="form-label">To Station</label>
+                            <input type="text" class="form-control" id="smsToInput" readonly style="opacity: 0.6;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Message (Max 160 chars)</label>
+                            <textarea class="form-control" id="smsBodyInput" rows="3"
+                                placeholder="Type classified message..." required maxlength="160"
+                                style="font-family: monospace;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-glow-warning w-100"><i
+                                class="fas fa-paper-plane me-2"></i>Send Encrypted SMS</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secure Email Modal -->
+    <div class="modal fade" id="secureEmailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color: var(--rose);"><i
+                            class="fas fa-envelope-open-text me-2"></i>Official Mail</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="emailForm">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label">To</label>
+                                <input type="text" class="form-control" id="emailToInput" readonly
+                                    style="opacity: 0.6;">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Priority</label>
+                                <select class="form-select" id="emailPriority">
+                                    <option>Normal</option>
+                                    <option>High</option>
+                                    <option style="color: red; font-weight: bold;">URGENT / RED ALERT</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="emailSubjectInput"
+                                placeholder="Case Ref / Subject..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Body</label>
+                            <textarea class="form-control" id="emailBodyInput" rows="5"
+                                placeholder="Enter official communication details..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted"><small><i class="fas fa-paperclip"></i> Attach Case
+                                    File (Optional)</small></label>
+                            <input type="file" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-glow-danger w-100"><i
+                                class="fas fa-paper-plane me-2"></i>Dispatch Secure Mail</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== DASHBOARD ====== -->
+    <div id="dashboard" style="display: none;">
+        <!-- Mobile Toggle -->
+        <button class="mobile-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <h4>CRMS</h4>
+                <small>Police Department</small>
+            </div>
+            <div class="sidebar-user">
+                <div class="avatar" id="userAvatar"
+                    style="background: linear-gradient(135deg, var(--accent), var(--cyan));">A</div>
+                <div class="user-meta">
+                    <h6 id="sidebarUserName">Admin User</h6>
+                    <small id="sidebarUserRole">Administrator</small>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-link active" data-section="dashboard-section"><i
+                        class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="#" class="nav-link" data-section="cases-section"><i class="fas fa-folder-open"></i> Cases</a>
+                <a href="#" class="nav-link" data-section="fir-section"><i class="fas fa-file-alt"></i> Register FIR</a>
+                <a href="#" class="nav-link" data-section="criminals-section"><i class="fas fa-user-friends"></i>
+                    Criminals</a>
+                <a href="#" class="nav-link" data-section="secure-chat-section"><i class="fas fa-shield-alt"></i> Secure
+                    Chat</a>
+                <a href="#" class="nav-link" data-section="search-section"><i class="fas fa-search"></i> Search</a>
+                <div id="adminSections" style="display: none;">
+                    <a href="#" class="nav-link" data-section="officers-section"><i class="fas fa-user-tie"></i>
+                        Officers</a>
+                    <a href="#" class="nav-link" data-section="history-section"><i class="fas fa-history"></i> Logs</a>
+                    <a href="#" class="nav-link" data-section="settings-section"><i class="fas fa-cog"></i> Settings</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-glow-danger w-100" id="logoutBtnSidebar"><i
+                        class="fas fa-sign-out-alt me-2"></i>Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h2 id="pageTitle"><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h2>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="datetime" id="currentDateTime"></span>
+                    <button class="bell-btn" id="notificationBell">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge bg-danger rounded-pill" id="notificationBadge">3</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== DASHBOARD SECTION ===== -->
+            <div id="dashboard-section" class="content-section active">
+                <!-- Stats -->
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, var(--accent), #8b5cf6); color: white;"><i
+                                    class="fas fa-folder"></i></div>
+                            <h6>Total Cases</h6>
+                            <div class="stat-number" id="totalCases">0</div>
+                            <span class="badge badge-solved rounded-pill">+5% <i class="fas fa-arrow-up"></i></span>
+                            <div class="progress mt-3">
+                                <div class="progress-bar"
+                                    style="width: 70%; background: linear-gradient(90deg, var(--accent), var(--cyan));">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, var(--amber), #f97316); color: white;"><i
+                                    class="fas fa-clock"></i></div>
+                            <h6>Pending</h6>
+                            <div class="stat-number" id="pendingCases">0</div>
+                            <span class="badge badge-pending rounded-pill">Active</span>
+                            <div class="progress mt-3">
+                                <div class="progress-bar"
+                                    style="width: 45%; background: linear-gradient(90deg, var(--amber), #f97316);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, var(--emerald), #22d3ee); color: white;"><i
+                                    class="fas fa-check-circle"></i></div>
+                            <h6>Solved</h6>
+                            <div class="stat-number" id="solvedCases">0</div>
+                            <span class="badge badge-solved rounded-pill">+12% <i class="fas fa-arrow-up"></i></span>
+                            <div class="progress mt-3">
+                                <div class="progress-bar"
+                                    style="width: 60%; background: linear-gradient(90deg, var(--emerald), var(--cyan));">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, var(--rose), #ec4899); color: white;"><i
+                                    class="fas fa-fingerprint"></i></div>
+                            <h6>Criminal Records</h6>
+                            <div class="stat-number" id="criminalRecords">0</div>
+                            <div class="progress mt-3">
+                                <div class="progress-bar"
+                                    style="width: 85%; background: linear-gradient(90deg, var(--rose), #ec4899);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <h5 class="mb-3 fw-semibold">Quick Actions</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="quick-action" id="quickFirBtn"><i class="fas fa-file-signature"
+                                style="color: var(--accent);"></i>
+                            <h6>Register FIR</h6><small>File a new report</small>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="quick-action" id="quickSearchBtn"><i class="fas fa-search"
+                                style="color: var(--cyan);"></i>
+                            <h6>Global Search</h6><small>Find records fast</small>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="quick-action" id="quickCriminalBtn"><i class="fas fa-user-lock"
+                                style="color: var(--rose);"></i>
+                            <h6>Criminals</h6><small>View database</small>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="quick-action" id="quickReportBtn"><i class="fas fa-file-download"
+                                style="color: var(--emerald);"></i>
+                            <h6>Generate Report</h6><small>Download analytics</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Cases Table -->
+                <div class="glass-card mb-4">
+                    <h5 class="mb-3"><i class="fas fa-history me-2" style="color: var(--accent);"></i>Recent Cases</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark-custom">
+                            <thead>
+                                <tr>
+                                    <th>Case ID</th>
+                                    <th>Type</th>
+                                    <th>Complainer</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="casesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Crime Analytics Chart -->
+                <div class="glass-card">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2" style="color: var(--accent);"></i>Crime Analytics
+                    </h5>
+                    <div class="chart-container"><canvas id="crimeChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ===== SECURE CHAT SECTION ===== -->
+            <div id="secure-chat-section" class="content-section">
+                <div class="glass-card mb-4">
+                    <h5><i class="fas fa-network-wired me-2" style="color: var(--accent);"></i>Secure Inter-Station
+                        Network</h5>
+                    <p class="text-muted mt-1 mb-0">Direct secure line to other registered police stations. All
+                        communications are encrypted.</p>
+                </div>
+
+                <div class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="stationSearch"
+                            placeholder="Search for a station (e.g., Mumbai, Pune)...">
+                        <button class="btn btn-accent"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="station-card d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <h6><span class="status-dot online me-2"></span>Mumbai HQ (Main Control)</h6>
+                                <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>Crawford Market,
+                                    Mumbai</small><br>
+                                <small class="text-muted"><strong>ID:</strong> STN-MUM-01 | <strong>Officer:</strong>
+                                    ACP R. K. Singh</small><br>
+                                <small class="text-muted"><strong>Email:</strong> control.mumbai@police.gov.in |
+                                    <strong>Secure Line:</strong> +91 22 2345 6789</small>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-accent"
+                                    onclick="initiateCall('Mumbai HQ', '+91 22 2345 6789')"><i
+                                        class="fas fa-phone me-1"></i>Call</button>
+                                <button class="btn btn-sm btn-glow-warning"
+                                    onclick="sendSMS('Mumbai HQ', '+91 98765 43210')"><i
+                                        class="fas fa-comment-alt me-1"></i>SMS</button>
+                                <button class="btn btn-sm btn-glow-danger"
+                                    onclick="sendEmail('Mumbai HQ', 'control.mumbai@police.gov.in')"><i
+                                        class="fas fa-envelope me-1"></i>Email</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="station-card d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <h6><span class="status-dot online me-2"></span>Thane Rural Station</h6>
+                                <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>Thane West,
+                                    Thane</small><br>
+                                <small class="text-muted"><strong>ID:</strong> STN-THN-04 | <strong>Officer:</strong> PI
+                                    V. Deshmukh</small><br>
+                                <small class="text-muted"><strong>Email:</strong> thane.rural@police.gov.in |
+                                    <strong>Secure Line:</strong> +91 22 8765 4321</small>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-accent"
+                                    onclick="initiateCall('Thane Rural', '+91 22 8765 4321')"><i
+                                        class="fas fa-phone me-1"></i>Call</button>
+                                <button class="btn btn-sm btn-glow-warning"
+                                    onclick="sendSMS('Thane Rural', '+91 87654 32109')"><i
+                                        class="fas fa-comment-alt me-1"></i>SMS</button>
+                                <button class="btn btn-sm btn-glow-danger"
+                                    onclick="sendEmail('Thane Rural', 'thane.rural@police.gov.in')"><i
+                                        class="fas fa-envelope me-1"></i>Email</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="station-card d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <h6><span class="status-dot online me-2"></span>Pune City Station</h6>
+                                <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>Shivajinagar,
+                                    Pune</small><br>
+                                <small class="text-muted"><strong>ID:</strong> STN-PUN-02 | <strong>Officer:</strong>
+                                    DCP A. Kulkarni</small><br>
+                                <small class="text-muted"><strong>Email:</strong> pune.city@police.gov.in |
+                                    <strong>Secure Line:</strong> +91 20 2553 1234</small>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-accent"
+                                    onclick="initiateCall('Pune City', '+91 20 2553 1234')"><i
+                                        class="fas fa-phone me-1"></i>Call</button>
+                                <button class="btn btn-sm btn-glow-warning"
+                                    onclick="sendSMS('Pune City', '+91 76543 21098')"><i
+                                        class="fas fa-comment-alt me-1"></i>SMS</button>
+                                <button class="btn btn-sm btn-glow-danger"
+                                    onclick="sendEmail('Pune City', 'pune.city@police.gov.in')"><i
+                                        class="fas fa-envelope me-1"></i>Email</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="station-card d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <h6><span class="status-dot offline me-2"></span>Nashik Control Room</h6>
+                                <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>Gangapur Road,
+                                    Nashik</small><br>
+                                <small class="text-muted"><strong>ID:</strong> STN-NSK-07 | <strong>Officer:</strong> PI
+                                    S. Jadhav</small><br>
+                                <small class="text-muted"><strong>Email:</strong> nashik.control@police.gov.in |
+                                    <strong>Secure Line:</strong> +91 253 230 5678</small>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-accent"
+                                    onclick="initiateCall('Nashik Control', '+91 253 230 5678')"><i
+                                        class="fas fa-phone me-1"></i>Call</button>
+                                <button class="btn btn-sm btn-glow-warning"
+                                    onclick="sendSMS('Nashik Control', '+91 99887 76655')"><i
+                                        class="fas fa-comment-alt me-1"></i>SMS</button>
+                                <button class="btn btn-sm btn-glow-danger"
+                                    onclick="sendEmail('Nashik Control', 'nashik.control@police.gov.in')"><i
+                                        class="fas fa-envelope me-1"></i>Email</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== CASES SECTION ===== -->
+            <div id="cases-section" class="content-section">
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-sm btn-accent" id="filterCasesBtn"><i
+                            class="fas fa-filter me-1"></i>Filter</button>
+                    <button class="btn btn-sm btn-outline-light" id="exportCasesBtn"><i
+                            class="fas fa-file-export me-1"></i>Export</button>
+                </div>
+                <div class="glass-card">
+                    <div class="table-responsive">
+                        <table class="table table-dark-custom">
+                            <thead>
+                                <tr>
+                                    <th>Case ID</th>
+                                    <th>Type</th>
+                                    <th>Complainer</th>
+                                    <th>Criminal</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allCasesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== FIR SECTION ===== -->
+            <div id="fir-section" class="content-section">
+                <div class="text-center py-5">
+                    <button class="btn btn-accent btn-lg px-5" id="openFirFormBtn"><i
+                            class="fas fa-plus-circle me-2"></i>Open FIR Registration Form</button>
+                </div>
+            </div>
+
+            <!-- ===== CRIMINALS SECTION ===== -->
+            <div id="criminals-section" class="content-section">
+                <div class="d-flex flex-wrap gap-3 mb-4 align-items-center">
+                    <div class="input-group" style="max-width: 400px;">
+                        <input type="text" class="form-control" id="searchCriminal"
+                            placeholder="Search criminal by name or ID...">
+                        <button class="btn btn-accent" id="searchCriminalBtn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <button class="btn btn-sm btn-outline-light" id="viewAllCriminalsBtn"><i
+                            class="fas fa-list me-1"></i>View All</button>
+                    <button class="btn btn-sm btn-glow-warning" id="filterCriminalsBtn"><i
+                            class="fas fa-filter me-1"></i>Filter</button>
+                </div>
+                <div class="row g-3" id="criminalRecordsList"></div>
+            </div>
+
+            <!-- ===== SEARCH SECTION ===== -->
+            <div id="search-section" class="content-section">
+                <div class="glass-card mb-4">
+                    <h5 class="mb-3">Global Database Search</h5>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="globalSearch"
+                            placeholder="Search cases, criminals, officers...">
+                        <button class="btn btn-accent" id="searchBtn"><i class="fas fa-search me-1"></i>Search</button>
+                    </div>
+                    <div id="searchResults"></div>
+                </div>
+
+                <div class="face-upload" id="faceUploadArea">
+                    <i class="fas fa-camera fa-3x mb-3" style="color: var(--accent);"></i>
+                    <h5>Face Recognition Search</h5>
+                    <p class="text-muted">Click to upload suspect photo for database matching</p>
+                </div>
+                <div id="faceSearchResults" class="mt-3"></div>
+            </div>
+
+            <!-- ===== OFFICERS SECTION ===== -->
+            <div id="officers-section" class="content-section">
+                <div class="mb-3">
+                    <button class="btn btn-accent" id="registerNewOfficerBtn"><i
+                            class="fas fa-user-plus me-2"></i>Register Officer</button>
+                </div>
+                <div class="glass-card">
+                    <div class="table-responsive">
+                        <table class="table table-dark-custom">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="officersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== HISTORY/LOGS SECTION ===== -->
+            <div id="history-section" class="content-section">
+                <div class="glass-card mb-4">
+                    <h5 class="mb-3">Login History</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark-custom">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Login Time</th>
+                                    <th>Logout Time</th>
+                                    <th>IP Address</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loginHistoryTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="glass-card">
+                    <h5 class="mb-3">Recent System Activities</h5>
+                    <div id="activityFeed"></div>
+                </div>
+            </div>
+
+            <!-- ===== SETTINGS SECTION ===== -->
+            <div id="settings-section" class="content-section">
+                <div class="glass-card" style="max-width: 640px; margin: 0 auto;">
+                    <h5 class="mb-4"><i class="fas fa-cog me-2" style="color: var(--accent);"></i>System Configuration
+                    </h5>
+
+                    <div class="setting-row d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Auto-Delete Expired Records</h6><small class="text-muted">Automatically
+                                remove records after sentence completion</small>
+                        </div>
+                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox"
+                                id="autoDeleteToggle" checked></div>
+                    </div>
+                    <div class="setting-row d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Email Notifications</h6><small class="text-muted">Receive alerts for
+                                critical updates</small>
+                        </div>
+                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox"
+                                id="emailNotificationsToggle"></div>
+                    </div>
+                    <div class="setting-row d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">2-Factor Authentication</h6><small class="text-muted">Require OTP for
+                                officer login</small>
+                        </div>
+                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox"
+                                id="twoFactorToggle"></div>
+                    </div>
+                    <div class="setting-row d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Real-Time Alerts</h6><small class="text-muted">Show popup notifications for
+                                new cases</small>
+                        </div>
+                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox"
+                                id="realTimeAlertsToggle" checked></div>
+                    </div>
+
+                    <button class="btn btn-accent w-100 mt-4 py-3" id="saveSettingsBtn"><i
+                            class="fas fa-save me-2"></i>Save Configuration</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ====== CHATBOT ====== -->
+    <button class="chatbot-fab" id="chatbotToggle"><i class="fas fa-robot"></i></button>
+    <div class="chatbot-panel" id="chatbotWindow">
+        <div class="chat-header">
+            <h6><i class="fas fa-robot me-2"></i>CRMS Assistant</h6>
+            <span style="color: var(--accent); font-size: 0.85rem;">Online</span>
+        </div>
+        <div class="chat-messages d-flex flex-column" id="chatbotMessages">
+            <div class="chat-msg bot">Hello! I'm your CRMS assistant. How can I help you today?</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chatbotInput" placeholder="Type your question...">
+            <button id="sendChatbotMessage"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ============================================
+        // INITIALIZATION & DATA
+        // ============================================
+
+        const crimeSections = {
+            "Murder": "IPC Section 302",
+            "Manslaughter": "IPC Section 304",
+            "Assault": "IPC Section 351",
+            "Battery": "IPC Section 352",
+            "Rape": "IPC Section 376",
+            "Robbery": "IPC Section 392",
+            "Kidnapping": "IPC Section 363",
+            "Domestic Violence": "Protection of Women from Domestic Violence Act, 2005",
+            "Identity Theft": "IPC Section 66C",
+            "Hacking": "IPC Section 66",
+            "Online Fraud": "IPC Section 420",
+            "Child Pornography": "POCSO Act, 2012 & IT Act Section 67B",
+            "Cyber Flashing": "IT Act Section 66E",
+            "Burglary": "IPC Section 454",
+            "Theft": "IPC Section 379",
+            "Motor Vehicle Theft": "IPC Section 379A",
+            "Arson": "IPC Section 435",
+            "Vandalism": "IPC Section 425",
+            "Criminal Damage": "IPC Section 427"
+        };
+
+        let sampleCases = [];
+        let criminalRecordsData = [];
+        let officersData = [];
+        let loginHistoryData = [];
+        let currentUser = null;
+        let userType = null;
+        let userInitial = 'A';
+        let notificationCount = 3;
+
+        const pageTitles = {
+            'dashboard-section': { title: 'Dashboard Overview', icon: 'fa-tachometer-alt' },
+            'cases-section': { title: 'Case Files', icon: 'fa-folder-open' },
+            'fir-section': { title: 'Register FIR', icon: 'fa-file-alt' },
+            'criminals-section': { title: 'Criminal Records', icon: 'fa-user-friends' },
+            'search-section': { title: 'Global Search', icon: 'fa-search' },
+            'officers-section': { title: 'Officer Management', icon: 'fa-user-tie' },
+            'history-section': { title: 'Login History', icon: 'fa-history' },
+            'settings-section': { title: 'System Settings', icon: 'fa-cog' },
+            'secure-chat-section': { title: 'Secure Chat Network', icon: 'fa-shield-alt' }
+        };
+
+        // ============================================
+        // BOOTSTRAP MODAL INSTANCES
+        // ============================================
+        let bsAdminModal, bsOfficerModal, bsForgotModal, bsFirModal, bsFilterModal, bsCallModal, bsSmsModal, bsEmailModal;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            bsAdminModal = new bootstrap.Modal(document.getElementById('adminLoginModal'));
+            bsOfficerModal = new bootstrap.Modal(document.getElementById('officerLoginModal'));
+            bsForgotModal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
+            bsFirModal = new bootstrap.Modal(document.getElementById('firModal'));
+            bsFilterModal = new bootstrap.Modal(document.getElementById('filterCasesModal'));
+            bsCallModal = new bootstrap.Modal(document.getElementById('secureCallModal'));
+            bsSmsModal = new bootstrap.Modal(document.getElementById('secureSmsModal'));
+            bsEmailModal = new bootstrap.Modal(document.getElementById('secureEmailModal'));
+
+            fetchAllData();
+            updateDashboardStats();
+            loadCasesTable();
+            loadAllCasesTable();
+            loadCriminalRecords();
+            loadOfficersTable();
+            loadLoginHistory();
+            initCrimeChart();
+
+            setTimeout(() => showNotification('System Ready', 'Crime Report Management System is fully loaded.', 'success'), 1000);
+        });
+
+        // ============================================
+        // FETCH DATA
+        // ============================================
+        async function fetchAllData() {
+            try {
+                const [casesRes, crimRes, offRes, loginRes] = await Promise.all([
+                    fetch('/api/cases'), fetch('/api/criminals'), fetch('/api/officers'), fetch('/api/login-history')
+                ]);
+                if (casesRes.ok) sampleCases = await casesRes.json();
+                if (crimRes.ok) criminalRecordsData = await crimRes.json();
+                if (offRes.ok) officersData = await offRes.json();
+                if (loginRes.ok) loginHistoryData = await loginRes.json();
+            } catch (err) {
+                console.error('Error fetching data:', err);
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        document.getElementById('adminLoginBtn').addEventListener('click', () => bsAdminModal.show());
+        document.getElementById('officerLoginBtn').addEventListener('click', () => bsOfficerModal.show());
+        document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => { e.preventDefault(); bsForgotModal.show(); });
+
+        document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
+        document.getElementById('officerLoginForm').addEventListener('submit', handleOfficerLogin);
+        document.getElementById('forgotPasswordForm').addEventListener('submit', handleForgotPassword);
+        document.getElementById('firForm').addEventListener('submit', handleFirSubmit);
+        document.getElementById('filterCasesForm').addEventListener('submit', handleFilterSubmit);
+
+        // Navigation
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = item.getAttribute('data-section');
+                navigateToSection(sectionId);
+                if (sectionId === 'fir-section') bsFirModal.show();
+            });
+        });
+
+        // Mobile Menu
+        document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('show'));
+
+        // Quick Actions
+        document.getElementById('quickFirBtn').addEventListener('click', () => { navigateToSection('fir-section'); bsFirModal.show(); });
+        document.getElementById('quickSearchBtn').addEventListener('click', () => navigateToSection('search-section'));
+        document.getElementById('quickCriminalBtn').addEventListener('click', () => navigateToSection('criminals-section'));
+        document.getElementById('quickReportBtn').addEventListener('click', handleGenerateReport);
+        document.getElementById('openFirFormBtn').addEventListener('click', () => bsFirModal.show());
+
+        // FIR
+        document.getElementById('cancelFirBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+                bsFirModal.hide();
+                document.getElementById('firForm').reset();
+                document.getElementById('applicableSection').textContent = 'Select crime type to see applicable section';
+            }
+        });
+        document.getElementById('crimeType').addEventListener('change', updateCrimeSection);
+
+        // Cases
+        document.getElementById('filterCasesBtn').addEventListener('click', openFilterModal);
+        document.getElementById('exportCasesBtn').addEventListener('click', exportCases);
+        document.getElementById('clearFilterBtn').addEventListener('click', clearCaseFilters);
+
+        // Criminals
+        document.getElementById('viewAllCriminalsBtn').addEventListener('click', showAllCriminalsModal);
+        document.getElementById('filterCriminalsBtn').addEventListener('click', () => showNotification('Filter Criminals', 'Filter functionality would show filtering options.', 'info'));
+        document.getElementById('searchCriminalBtn').addEventListener('click', searchCriminalRecords);
+        document.getElementById('searchCriminal').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchCriminalRecords(); });
+
+        // Search
+        document.getElementById('searchBtn').addEventListener('click', performGlobalSearch);
+        document.getElementById('globalSearch').addEventListener('keypress', (e) => { if (e.key === 'Enter') performGlobalSearch(); });
+        document.getElementById('faceUploadArea').addEventListener('click', handleFaceSearch);
+
+        // Officers
+        document.getElementById('registerNewOfficerBtn').addEventListener('click', registerNewOfficer);
+
+        // Settings
+        document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+
+        // Chatbot
+        document.getElementById('chatbotToggle').addEventListener('click', toggleChatbot);
+        document.getElementById('sendChatbotMessage').addEventListener('click', sendChatMessage);
+        document.getElementById('chatbotInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+
+        // Notification Bell
+        document.getElementById('notificationBell').addEventListener('click', showNotifications);
+
+        // Logout
+        document.getElementById('logoutBtnSidebar').addEventListener('click', handleLogout);
+
+        // SMS & Email form handlers
+        document.getElementById('smsForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            bsSmsModal.hide();
+            showNotification('SMS Sent', 'Encrypted message sent.', 'success');
+        });
+
+        document.getElementById('emailForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            bsEmailModal.hide();
+            showNotification('Email Dispatched', 'Official mail sent successfully.', 'success');
+        });
+
+        // ============================================
+        // COMMUNICATION FUNCTIONS
+        // ============================================
+        window.initiateCall = function (name, number) {
+            document.getElementById('callNameDisplay').textContent = name;
+            document.getElementById('callNumberDisplay').textContent = number;
+            document.getElementById('callAvatarIcon').textContent = name.charAt(0);
+            bsCallModal.show();
+        };
+
+        window.sendSMS = function (name, number) {
+            document.getElementById('smsToInput').value = `${name} (${number})`;
+            document.getElementById('smsBodyInput').value = '';
+            bsSmsModal.show();
+        };
+
+        window.sendEmail = function (name, email) {
+            document.getElementById('emailToInput').value = email;
+            document.getElementById('emailSubjectInput').value = '';
+            document.getElementById('emailBodyInput').value = '';
+            bsEmailModal.show();
+        };
+
+        // ============================================
+        // NOTIFICATION / TOAST
+        // ============================================
+        function showNotification(title, message, type = 'info') {
+            const toast = document.getElementById('crmsToast');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMsg').textContent = message;
+            toast.className = 'crms-toast toast-' + type;
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.remove('show'), 5000);
+        }
+
+        function showNotifications() {
+            notificationCount = 0;
+            document.getElementById('notificationBadge').textContent = '0';
+            showNotification('Notifications', 'You have no unread notifications.', 'info');
+        }
+
+        // ============================================
+        // AUTH FUNCTIONS
+        // ============================================
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, type: 'admin' })
+                });
+                const data = await res.json();
+
+                if (data.success && data.user.role === 'Admin') {
+                    currentUser = data.user.name;
+                    userType = 'admin';
+                    userInitial = data.user.name.charAt(0);
+                    await fetchAllData();
+                    loginUser();
+                    bsAdminModal.hide();
+                    fetch('/api/login-history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: currentUser, type: 'Admin', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Success' }) });
+                    setTimeout(() => showNotification('Security Alert', 'New login detected.', 'warning'), 1000);
+                } else {
+                    showNotification('Login Failed', 'Invalid admin credentials.', 'danger');
+                    fetch('/api/login-history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: 'Unknown Admin', type: 'Admin', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Failed' }) });
+                }
+            } catch (err) {
+                showNotification('Error', 'Server error during login.', 'danger');
+            }
+        }
+
+        async function handleOfficerLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('officerEmail').value.trim();
+            const password = document.getElementById('officerPassword').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, type: 'officer' })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    const officer = data.user;
+                    if (officer.status === 'Inactive') {
+                        showNotification('Account Locked', 'Your account is deactivated. Contact Admin.', 'danger');
+                        return;
+                    }
+                    currentUser = `${officer.name} (${officer.id})`;
+                    userType = 'officer';
+                    userInitial = officer.name.charAt(0).toUpperCase();
+                    await fetchAllData();
+                    loginUser();
+                    bsOfficerModal.hide();
+                    addActivity(`Officer logged in: ${officer.id}`);
+                    fetch('/api/login-history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: currentUser, type: 'Officer', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Success' }) });
+                } else {
+                    showNotification('Login Failed', 'Incorrect password or email.', 'danger');
+                    fetch('/api/login-history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: 'Unknown Officer', type: 'Officer', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Failed' }) });
+                }
+            } catch (err) {
+                showNotification('Error', 'Server error during login.', 'danger');
+            }
+        }
+
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            const uType = document.getElementById('userType').value;
+            showNotification('Password Reset', `Reset link sent to ${email} for ${uType} account.`, 'success');
+            bsForgotModal.hide();
+        }
+
+        function loginUser() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            document.getElementById('sidebarUserName').textContent = currentUser;
+            document.getElementById('sidebarUserRole').textContent = userType === 'admin' ? 'Administrator' : 'Officer';
+            document.getElementById('userAvatar').textContent = userInitial;
+            document.getElementById('userAvatar').style.background = userType === 'admin'
+                ? 'linear-gradient(135deg, var(--accent), var(--cyan))'
+                : 'linear-gradient(135deg, var(--rose), #f97316)';
+
+            if (userType === 'admin') document.getElementById('adminSections').style.display = 'block';
+
+            updateDashboardStats();
+            loadCasesTable();
+            loadAllCasesTable();
+            loadCriminalRecords();
+            loadOfficersTable();
+            loadLoginHistory();
+            initCrimeChart();
+            updateDateTime();
+            startClock();
+            checkExpiredRecords();
+
+            showNotification('Login Successful', `Welcome back, ${currentUser}!`, 'success');
+            if (userType === 'admin') {
+                setTimeout(() => showNotification('Security Alert', 'Enhanced security features are active.', 'warning'), 2000);
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('adminLoginForm').reset();
+            document.getElementById('officerLoginForm').reset();
+            document.getElementById('firForm').reset();
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('sidebar').classList.remove('show');
+            showNotification('Logged Out', 'You have been successfully logged out.', 'success');
+            currentUser = null;
+            userType = null;
+            notificationCount = 3;
+            document.getElementById('notificationBadge').textContent = '3';
+        }
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function navigateToSection(sectionId) {
+            document.querySelectorAll('.sidebar-nav .nav-link').forEach(n => n.classList.remove('active'));
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            if (pageTitles[sectionId]) {
+                document.getElementById('pageTitle').innerHTML = `<i class="fas ${pageTitles[sectionId].icon}"></i> ${pageTitles[sectionId].title}`;
+            }
+            if (window.innerWidth <= 992) document.getElementById('sidebar').classList.remove('show');
+        }
+
+        // ============================================
+        // FIR
+        // ============================================
+        function updateCrimeSection() {
+            const selected = document.getElementById('crimeType').value;
+            document.getElementById('applicableSection').textContent = crimeSections[selected] || 'Select crime type to see applicable section';
+        }
+
+        async function handleFirSubmit(e) {
+            e.preventDefault();
+            if (!confirm('Do you want to save this FIR?')) return;
+
+            const crimeType = document.getElementById('crimeType').value;
+            const criminalName = document.getElementById('criminalName').value || 'Unknown';
+            const newCase = {
+                id: `CR-${new Date().getFullYear()}-${String(sampleCases.length + 1).padStart(3, '0')}`,
+                type: crimeType,
+                complainer: document.getElementById('complainerName').value,
+                criminal: criminalName,
+                date_reported: new Date().toISOString().split('T')[0],
+                status: 'Pending'
+            };
+
+            try {
+                await fetch('/api/cases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newCase) });
+
+                if (criminalName !== 'Unknown') {
+                    const newCriminal = {
+                        id: `CRIM-${new Date().getFullYear()}-${String(criminalRecordsData.length + 1).padStart(3, '0')}`,
+                        name: criminalName, crime: crimeType, status: 'Wanted', sentenceEnd: null,
+                        age: document.getElementById('criminalAge').value || null,
+                        gender: document.getElementById('criminalGender').value || null,
+                        occupation: document.getElementById('criminalOccupation').value || null,
+                        address: document.getElementById('criminalAddress').value || null,
+                        officer: currentUser || 'Unknown'
+                    };
+                    await fetch('/api/criminals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newCriminal) });
+                }
+
+                await fetchAllData();
+                updateDashboardStats(); loadCasesTable(); loadAllCasesTable(); loadCriminalRecords();
+                showNotification('FIR Registered', `FIR ${newCase.id} has been successfully registered.`, 'success');
+                bsFirModal.hide();
+                document.getElementById('firForm').reset();
+                document.getElementById('applicableSection').textContent = 'Select crime type to see applicable section';
+                notificationCount++;
+                document.getElementById('notificationBadge').textContent = notificationCount;
+                addActivity(`New FIR registered: ${newCase.id}`);
+            } catch (err) { console.error(err); }
+        }
+
+        // ============================================
+        // CASE TABLE FUNCTIONS
+        // ============================================
+        function loadCasesTable() {
+            const tbody = document.getElementById('casesTableBody');
+            tbody.innerHTML = '';
+            sampleCases.slice(0, 5).forEach(c => {
+                tbody.innerHTML += `<tr>
+            <td><code>${c.id}</code></td>
+            <td>${c.type}</td>
+            <td>${c.complainer}</td>
+            <td>${c.date_reported || c.date || ''}</td>
+            <td><span class="badge rounded-pill ${c.status === 'Solved' ? 'badge-solved' : 'badge-pending'}">${c.status}</span></td>
+            <td>
+                <button class="btn btn-sm btn-accent me-1" onclick="viewCase('${c.id}')"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-sm btn-glow-danger" onclick="deleteCase('${c.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+            });
+        }
+
+        function loadAllCasesTable(data) {
+            data = data || sampleCases;
+            const tbody = document.getElementById('allCasesTableBody');
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No cases found matching your criteria.</td></tr>';
+                return;
+            }
+            data.forEach(c => {
+                tbody.innerHTML += `<tr>
+            <td><code>${c.id}</code></td>
+            <td>${c.type}</td>
+            <td>${c.complainer}</td>
+            <td>${c.criminal}</td>
+            <td>${c.date_reported || c.date || ''}</td>
+            <td><span class="badge rounded-pill ${c.status === 'Solved' ? 'badge-solved' : 'badge-pending'}">${c.status}</span></td>
+            <td>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-accent" onclick="viewCase('${c.id}')"><i class="fas fa-eye"></i></button>
+                    <button class="btn btn-sm btn-glow-warning" onclick="toggleCaseStatus('${c.id}')"><i class="fas fa-exchange-alt"></i></button>
+                    <button class="btn btn-sm btn-glow-danger" onclick="deleteCase('${c.id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
+        </tr>`;
+            });
+        }
+
+        function openFilterModal() {
+            const sel = document.getElementById('filterCrimeType');
+            if (sel.options.length <= 1) {
+                Object.keys(crimeSections).sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+            }
+            bsFilterModal.show();
+        }
+
+        function handleFilterSubmit(e) {
+            e.preventDefault();
+            const idQ = document.getElementById('filterCaseId').value.trim().toLowerCase();
+            const typeQ = document.getElementById('filterCrimeType').value;
+            const nameQ = document.getElementById('filterCriminalName').value.trim().toLowerCase();
+            const dateQ = document.getElementById('filterDate').value;
+            const statusQ = document.getElementById('filterStatus').value;
+            const filtered = sampleCases.filter(c => {
+                return (!idQ || c.id.toLowerCase().includes(idQ)) &&
+                    (!typeQ || c.type === typeQ) &&
+                    (!nameQ || c.criminal.toLowerCase().includes(nameQ)) &&
+                    (!dateQ || (c.date_reported || c.date) === dateQ) &&
+                    (!statusQ || c.status === statusQ);
+            });
+            loadAllCasesTable(filtered);
+            bsFilterModal.hide();
+            showNotification('Filter Applied', `Found ${filtered.length} cases.`, 'success');
+        }
+
+        function clearCaseFilters() {
+            document.getElementById('filterCasesForm').reset();
+            loadAllCasesTable(sampleCases);
+            bsFilterModal.hide();
+            showNotification('Filters Cleared', 'Showing all cases.', 'info');
+        }
+
+        function viewCase(caseId) {
+            const c = sampleCases.find(x => x.id === caseId);
+            if (!c) return;
+            const criminal = criminalRecordsData.find(x => x.name === c.criminal);
+
+            let criminalHtml = '';
+            if (criminal) {
+                criminalHtml = `
+        <div class="glass-card mt-3 p-3">
+            <h6 style="color: var(--accent);"><i class="fas fa-user-secret me-1"></i> Criminal Details</h6>
+            <div class="d-flex gap-3 mt-2 flex-wrap">
+                <div class="criminal-avatar">${criminal.name.charAt(0)}</div>
+                <div>
+                    <strong>${criminal.name}</strong> <code class="ms-2">${criminal.id}</code><br>
+                    <span class="badge rounded-pill ${getStatusClass(criminal.status)} mt-1">${criminal.status}</span>
+                    <p class="mt-1 mb-0 text-muted small">${criminal.age ? `${criminal.age} yrs` : 'N/A'}, ${criminal.gender || 'N/A'} | Crime: ${criminal.crime}</p>
+                </div>
+            </div>
+        </div>`;
+            } else {
+                criminalHtml = `<div class="glass-card mt-3 p-3"><p class="text-muted mb-0"><i class="fas fa-question-circle me-1"></i> ${c.criminal} — No detailed record found in the criminal database.</p></div>`;
+            }
+
+            const modalEl = document.createElement('div');
+            modalEl.innerHTML = `
+    <div class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-folder-open me-2"></i>Case Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <div><code>${c.id}</code><h5 class="mt-1 mb-0">${c.type}</h5></div>
+                        <div class="text-end">
+                            <span class="badge rounded-pill fs-6 ${c.status === 'Solved' ? 'badge-solved' : 'badge-pending'}">${c.status}</span>
+                            <p class="text-muted small mt-1 mb-0">${c.date_reported || c.date || ''}</p>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6"><small class="text-muted text-uppercase">Complainer</small><p class="fw-semibold"><i class="fas fa-user me-1"></i> ${c.complainer}</p></div>
+                        <div class="col-6"><small class="text-muted text-uppercase">Investigation</small><p>Assigned to: <span style="color: var(--accent);">Current Officer</span></p></div>
+                    </div>
+                    ${criminalHtml}
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+            document.body.appendChild(modalEl);
+            const modal = new bootstrap.Modal(modalEl.querySelector('.modal'));
+            modal.show();
+            modalEl.querySelector('.modal').addEventListener('hidden.bs.modal', () => modalEl.remove());
+        }
+
+        async function deleteCase(caseId) {
+            if (!confirm(`Delete case ${caseId}? This cannot be undone.`)) return;
+            try {
+                await fetch(`/api/cases/${caseId}`, { method: 'DELETE' });
+                await fetchAllData();
+                updateDashboardStats(); loadCasesTable(); loadAllCasesTable();
+                showNotification('Case Deleted', `Case ${caseId} deleted.`, 'warning');
+                addActivity(`Case deleted: ${caseId}`);
+            } catch (err) { console.error(err); }
+        }
+
+        async function toggleCaseStatus(caseId) {
+            const c = sampleCases.find(x => x.id === caseId);
+            if (!c) return;
+            const newStatus = c.status === 'Pending' ? 'Solved' : 'Pending';
+            try {
+                await fetch(`/api/cases/${caseId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
+                await fetchAllData();
+                updateDashboardStats(); loadCasesTable(); loadAllCasesTable();
+                showNotification('Case Updated', `Status changed to ${newStatus}.`, 'success');
+                addActivity(`Case status updated: ${caseId}`);
+            } catch (err) { console.error(err); }
+        }
+
+        function exportCases() {
+            showNotification('Export Cases', 'Cases exported. Download will start shortly.', 'success');
+            addActivity('Cases exported to CSV');
+        }
+
+        // ============================================
+        // CRIMINAL RECORDS
+        // ============================================
+        function getStatusClass(status) {
+            switch (status) {
+                case 'Released': return 'badge-solved';
+                case 'Active': return 'badge-active';
+                case 'Wanted': return 'badge-wanted';
+                default: return 'badge-pending';
+            }
+        }
+
+        function loadCriminalRecords() {
+            const container = document.getElementById('criminalRecordsList');
+            container.innerHTML = '';
+            criminalRecordsData.slice(0, 4).forEach(c => {
+                container.innerHTML += `
+        <div class="col-lg-6 col-xl-3">
+            <div class="criminal-card">
+                <div class="d-flex gap-3 align-items-start mb-3">
+                    <div class="criminal-avatar">${c.name.charAt(0)}</div>
+                    <div>
+                        <h6 class="mb-0">${c.name}</h6>
+                        <small class="text-muted">${c.id} • ${c.crime}</small><br>
+                        <small style="color: var(--cyan);"><i class="fas fa-user-shield me-1"></i>Reg. by: ${c.officer || 'Unknown'}</small><br>
+                        <span class="badge rounded-pill ${getStatusClass(c.status)} mt-1">${c.status}</span>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">${c.age ? `Age: ${c.age}` : ''} ${c.gender ? `• ${c.gender}` : ''}</p>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-accent" onclick="viewCriminalDetails('${c.id}')"><i class="fas fa-eye me-1"></i>View</button>
+                    <button class="btn btn-sm btn-glow-danger" onclick="deleteCriminalRecord('${c.id}')"><i class="fas fa-trash me-1"></i>Delete</button>
+                </div>
+            </div>
+        </div>`;
+            });
+        }
+
+        function viewCriminalDetails(criminalId) {
+            const c = criminalRecordsData.find(x => x.id === criminalId);
+            if (!c) return;
+
+            const modalEl = document.createElement('div');
+            modalEl.innerHTML = `
+    <div class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-secret me-2"></i>Criminal Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex gap-3 flex-wrap mb-3">
+                        <div class="criminal-avatar" style="width: 80px; height: 80px; font-size: 2rem;">${c.name.charAt(0)}</div>
+                        <div>
+                            <h5 style="color: var(--accent);">${c.name}</h5>
+                            <p class="mb-1"><strong>ID:</strong> ${c.id}</p>
+                            <p class="mb-1"><strong>Crime:</strong> ${c.crime}</p>
+                            <p class="mb-1"><strong>Status:</strong> <span class="badge rounded-pill ${getStatusClass(c.status)}">${c.status}</span></p>
+                            <p class="mb-1"><strong>Sentence End:</strong> ${c.sentenceEnd || 'N/A'}</p>
+                            ${c.age ? `<p class="mb-1"><strong>Age:</strong> ${c.age}</p>` : ''}
+                            ${c.gender ? `<p class="mb-1"><strong>Gender:</strong> ${c.gender}</p>` : ''}
+                            ${c.occupation ? `<p class="mb-1"><strong>Occupation:</strong> ${c.occupation}</p>` : ''}
+                            ${c.address ? `<p class="mb-1"><strong>Address:</strong> ${c.address}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="glass-card p-3">
+                        <h6 style="color: var(--cyan);">Additional Information</h6>
+                        <p class="mb-1"><strong>Reporting Officer:</strong> ${c.officer || 'Unknown'}</p>
+                        <p class="mb-1"><strong>Applicable Act:</strong> ${crimeSections[c.crime] || 'IPC Section 302'}</p>
+                        <p class="mb-0"><strong>Last Updated:</strong> ${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+            document.body.appendChild(modalEl);
+            const modal = new bootstrap.Modal(modalEl.querySelector('.modal'));
+            modal.show();
+            modalEl.querySelector('.modal').addEventListener('hidden.bs.modal', () => modalEl.remove());
+        }
+
+        async function deleteCriminalRecord(criminalId) {
+            if (!confirm(`Delete criminal record ${criminalId}?`)) return;
+            try {
+                await fetch(`/api/criminals/${criminalId}`, { method: 'DELETE' });
+                await fetchAllData();
+                updateDashboardStats(); loadCriminalRecords();
+                showNotification('Record Deleted', `Criminal record ${criminalId} deleted.`, 'success');
+                addActivity(`Criminal record deleted: ${criminalId}`);
+            } catch (err) { console.error(err); }
+        }
+
+        function showAllCriminalsModal() {
+            const modalEl = document.createElement('div');
+            modalEl.innerHTML = `
+    <div class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-list me-2"></i>All Criminal Records</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark-custom">
+                            <thead><tr><th>ID</th><th>Name</th><th>Crime</th><th>Status</th><th>Sentence End</th><th>Actions</th></tr></thead>
+                            <tbody>
+                                ${criminalRecordsData.map(c => `<tr>
+                                    <td><code>${c.id}</code></td><td>${c.name}</td><td>${c.crime}</td>
+                                    <td><span class="badge rounded-pill ${getStatusClass(c.status)}">${c.status}</span></td>
+                                    <td>${c.sentenceEnd || 'N/A'}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-accent me-1" onclick="viewCriminalDetails('${c.id}')"><i class="fas fa-eye"></i></button>
+                                        <button class="btn btn-sm btn-glow-danger" onclick="deleteCriminalRecord('${c.id}')"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+            document.body.appendChild(modalEl);
+            const modal = new bootstrap.Modal(modalEl.querySelector('.modal'));
+            modal.show();
+            modalEl.querySelector('.modal').addEventListener('hidden.bs.modal', () => modalEl.remove());
+        }
+
+        function searchCriminalRecords() {
+            const query = document.getElementById('searchCriminal').value.trim().toLowerCase();
+            if (!query) { showNotification('Search Error', 'Please enter a search term.', 'warning'); return; }
+            const results = criminalRecordsData.filter(c =>
+                c.name.toLowerCase().includes(query) || c.id.toLowerCase().includes(query) || c.crime.toLowerCase().includes(query)
+            );
+            if (results.length === 0) showNotification('Search Results', `No criminals found for "${query}"`, 'warning');
+            else showNotification('Search Results', `Found ${results.length} criminal(s) matching "${query}"`, 'success');
+        }
+
+        // ============================================
+        // GLOBAL SEARCH
+        // ============================================
+        function performGlobalSearch() {
+            const query = document.getElementById('globalSearch').value.trim().toLowerCase();
+            if (!query) { showNotification('Search Error', 'Please enter a search term.', 'warning'); return; }
+
+            const cR = sampleCases.filter(c => c.id.toLowerCase().includes(query) || c.type.toLowerCase().includes(query) || c.complainer.toLowerCase().includes(query) || c.criminal.toLowerCase().includes(query)).length;
+            const crR = criminalRecordsData.filter(c => c.name.toLowerCase().includes(query) || c.id.toLowerCase().includes(query) || c.crime.toLowerCase().includes(query)).length;
+            const oR = officersData.filter(o => o.name.toLowerCase().includes(query) || o.id.toLowerCase().includes(query) || o.department.toLowerCase().includes(query)).length;
+
+            document.getElementById('searchResults').innerHTML = `
+    <div class="glass-card p-3 mt-3">
+        <h6>Search Results for "${query}"</h6>
+        <p class="mb-1">🔍 <strong>Cases:</strong> ${cR} found</p>
+        <p class="mb-1">👤 <strong>Criminals:</strong> ${crR} found</p>
+        <p class="mb-0">👮 <strong>Officers:</strong> ${oR} found</p>
+    </div>`;
+            showNotification('Search Complete', `Found ${cR + crR + oR} total results.`, 'info');
+        }
+
+        function handleFaceSearch() {
+            showNotification('Face Search', 'Processing uploaded image...', 'info');
+            setTimeout(() => {
+                document.getElementById('faceSearchResults').innerHTML = `
+        <div class="glass-card p-3">
+            <h6>Search Results</h6>
+            <p>Found 2 potential matches in criminal database:</p>
+            <div class="d-flex gap-3 flex-wrap mt-2">
+                <div class="text-center"><div class="mx-auto mb-2 rounded-circle" style="width: 70px; height: 70px; background: linear-gradient(135deg, var(--accent), var(--cyan));"></div><small>Match: 87%<br>ID: CRIM-2022-045</small></div>
+                <div class="text-center"><div class="mx-auto mb-2 rounded-circle" style="width: 70px; height: 70px; background: linear-gradient(135deg, var(--rose), #ec4899);"></div><small>Match: 72%<br>ID: CRIM-2021-128</small></div>
+            </div>
+        </div>`;
+                showNotification('Face Search Complete', 'Found 2 potential matches.', 'success');
+                addActivity('Face search performed with 2 matches found');
+            }, 2000);
+        }
+
+        // ============================================
+        // OFFICERS
+        // ============================================
+        function loadOfficersTable() {
+            const tbody = document.getElementById('officersTableBody');
+            tbody.innerHTML = '';
+            officersData.forEach(o => {
+                tbody.innerHTML += `<tr>
+            <td><code>${o.id}</code></td><td>${o.name}</td><td>${o.email}</td>
+            <td><span class="badge rounded-pill ${o.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${o.status}</span></td>
+            <td>
+                <button class="btn btn-sm ${o.status === 'Active' ? 'btn-glow-danger' : 'btn-glow-success'}" onclick="toggleOfficerStatus('${o.id}')">
+                    <i class="fas ${o.status === 'Active' ? 'fa-user-slash' : 'fa-user-check'} me-1"></i>${o.status === 'Active' ? 'Deactivate' : 'Activate'}
+                </button>
+            </td>
+        </tr>`;
+            });
+        }
+
+        async function toggleOfficerStatus(officerId) {
+            const o = officersData.find(x => x.id === officerId);
+            if (!o) return;
+            const newStatus = o.status === 'Active' ? 'Inactive' : 'Active';
+            try {
+                await fetch(`/api/officers/${officerId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
+                await fetchAllData(); loadOfficersTable();
+                showNotification('Officer Updated', `Officer ${newStatus}.`, 'success');
+                addActivity(`Officer ${newStatus}: ${o.id}`);
+            } catch (err) { console.error(err); }
+        }
+
+        function registerNewOfficer() {
+            if (userType !== 'admin') { showNotification('Access Denied', 'Only administrators can register officers.', 'danger'); return; }
+
+            const modalEl = document.createElement('div');
+            modalEl.innerHTML = `
+    <div class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Register New Officer</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newOfficerForm">
+                        <div class="mb-3"><label class="form-label">User Name *</label><input type="text" class="form-control" id="newOfficerName" required></div>
+                        <div class="mb-3"><label class="form-label">Email *</label><input type="email" class="form-control" id="newOfficerEmail" required></div>
+                        <div class="mb-3"><label class="form-label">Password *</label><input type="password" class="form-control" id="newOfficerPassword" required></div>
+                        <div class="mb-3">
+                            <label class="form-label">Permissions *</label>
+                            <div class="glass-card p-3" style="max-height: 180px; overflow-y: auto;">
+                                <div class="row g-2">
+                                    ${['All Access', 'See All Data', 'Register FIR', 'Edit/Update', 'Delete Files', 'Secure Chat', 'Manage Criminals', 'Export Reports'].map(p =>
+                `<div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="officerAuth" value="${p}" id="perm_${p.replace(/\W/g, '')}"><label class="form-check-label" for="perm_${p.replace(/\W/g, '')}" style="font-size: 0.88rem;">${p}</label></div></div>`
+            ).join('')}
+                                </div>
+                            </div>
+                            <small class="text-muted">Select at least one permission.</small>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-accent flex-fill"><i class="fas fa-user-plus me-2"></i>Register</button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+            document.body.appendChild(modalEl);
+            const modal = new bootstrap.Modal(modalEl.querySelector('.modal'));
+            modal.show();
+
+            modalEl.querySelector('#newOfficerForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const checkboxes = modalEl.querySelectorAll('input[name="officerAuth"]:checked');
+                if (checkboxes.length === 0) { alert('Select at least one permission.'); return; }
+
+                const perms = Array.from(checkboxes).map(c => c.value).join(', ');
+                const newOfficer = {
+                    id: `OFC-${String(officersData.length + 1).padStart(3, '0')}`,
+                    name: modalEl.querySelector('#newOfficerName').value,
+                    email: modalEl.querySelector('#newOfficerEmail').value,
+                    password: modalEl.querySelector('#newOfficerPassword').value,
+                    department: perms, status: 'Active', role: 'Officer'
+                };
+
+                try {
+                    await fetch('/api/officers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newOfficer) });
+                    await fetchAllData(); loadOfficersTable();
+                    showNotification('Officer Registered', `Officer ${newOfficer.name} added.`, 'success');
+                    addActivity(`New officer registered: ${newOfficer.id}`);
+                    modal.hide();
+                } catch (err) { console.error(err); }
+            });
+
+            modalEl.querySelector('.modal').addEventListener('hidden.bs.modal', () => modalEl.remove());
+        }
+
+        // ============================================
+        // LOGIN HISTORY & ACTIVITIES
+        // ============================================
+        function loadLoginHistory() {
+            document.getElementById('loginHistoryTable').innerHTML = loginHistoryData.map(e => `<tr>
+        <td>${e.user}</td><td>${e.type}</td><td>${e.login}</td><td>${e.logout}</td><td>${e.ip}</td>
+        <td><span class="badge rounded-pill ${e.status === 'Success' ? 'badge-success-custom' : 'badge-failed-custom'}">${e.status}</span></td>
+    </tr>`).join('');
+        }
+
+        function addActivity(description) {
+            const feed = document.getElementById('activityFeed');
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const item = document.createElement('div');
+            item.className = 'd-flex gap-3 align-items-start py-2';
+            item.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+            item.innerHTML = `
+        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: rgba(99,102,241,0.15);"><i class="fas fa-info-circle" style="color: var(--accent); font-size: 0.8rem;"></i></div>
+        <div><p class="mb-0 small">${description}</p><small class="text-muted">${time} • Just now</small></div>`;
+            feed.insertBefore(item, feed.firstChild);
+            while (feed.children.length > 5) feed.removeChild(feed.lastChild);
+        }
+
+        // ============================================
+        // SETTINGS & MISC
+        // ============================================
+        function saveSettings() {
+            showNotification('Settings Saved', 'System settings updated successfully.', 'success');
+            addActivity('System settings updated');
+        }
+
+        function updateDashboardStats() {
+            document.getElementById('totalCases').textContent = sampleCases.length;
+            document.getElementById('pendingCases').textContent = sampleCases.filter(c => c.status === 'Pending').length;
+            document.getElementById('solvedCases').textContent = sampleCases.filter(c => c.status === 'Solved').length;
+            document.getElementById('criminalRecords').textContent = criminalRecordsData.length;
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('currentDateTime').textContent = `${dateStr} • ${timeStr}`;
+        }
+
+        function startClock() { updateDateTime(); setInterval(updateDateTime, 1000); }
+
+        function checkExpiredRecords() {
+            const today = new Date().toISOString().split('T')[0];
+            let count = 0;
+            for (let i = criminalRecordsData.length - 1; i >= 0; i--) {
+                if (criminalRecordsData[i].sentenceEnd && criminalRecordsData[i].sentenceEnd < today && criminalRecordsData[i].status === 'Released') {
+                    criminalRecordsData.splice(i, 1); count++;
+                }
+            }
+            if (count > 0) {
+                showNotification('Auto Cleanup', `${count} criminal record(s) auto-deleted.`, 'warning');
+                updateDashboardStats(); loadCriminalRecords();
+            }
+        }
+
+        function handleGenerateReport() {
+            showNotification('Report Generated', 'Analytical report downloaded.', 'success');
+            addActivity('Analytical report generated');
+        }
+
+        // ============================================
+        // CHART.JS CRIME ANALYTICS
+        // ============================================
+        let crimeChartInstance = null;
+        function initCrimeChart() {
+            const canvas = document.getElementById('crimeChart');
+            if (!canvas) return;
+            if (crimeChartInstance) crimeChartInstance.destroy();
+
+            crimeChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Theft', 'Assault', 'Fraud', 'Burglary', 'Cybercrime'],
+                    datasets: [{
+                        label: 'Crime Prediction (%)',
+                        data: [65, 40, 35, 30, 55],
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(34, 211, 238, 0.7)',
+                            'rgba(251, 191, 36, 0.7)',
+                            'rgba(251, 113, 133, 0.7)',
+                            'rgba(52, 211, 153, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(99, 102, 241, 1)',
+                            'rgba(34, 211, 238, 1)',
+                            'rgba(251, 191, 36, 1)',
+                            'rgba(251, 113, 133, 1)',
+                            'rgba(52, 211, 153, 1)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // CHATBOT
+        // ============================================
+        function toggleChatbot() {
+            const win = document.getElementById('chatbotWindow');
+            win.classList.toggle('show');
+            if (win.classList.contains('show')) document.getElementById('chatbotInput').focus();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatbotInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addChatMessage(msg, 'user');
+            input.value = '';
+
+            const typing = document.createElement('div');
+            typing.className = 'chat-msg bot';
+            typing.innerHTML = '<i>Typing...</i>';
+            typing.id = 'botTyping';
+            document.getElementById('chatbotMessages').appendChild(typing);
+            document.getElementById('chatbotMessages').scrollTop = document.getElementById('chatbotMessages').scrollHeight;
+
+            setTimeout(() => {
+                const t = document.getElementById('botTyping');
+                if (t) t.remove();
+                addChatMessage(getSmartBotResponse(msg), 'bot');
+            }, 800);
+        }
+
+        function addChatMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `chat-msg ${sender}`;
+            div.innerHTML = text;
+            const container = document.getElementById('chatbotMessages');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function getSmartBotResponse(input) {
+            const text = input.toLowerCase();
+
+            if (text.includes('fir') || text.includes('register') || text.includes('complaint') || text.includes('case file')) {
+                return `<b>To Register a New FIR:</b><br>1. Go to 'Register FIR' in the sidebar.<br>2. Or click the 'Register FIR' card on Dashboard.<br>3. Select Crime Type & fill details.<br>4. Click <b>'Register FIR'</b> to save.`;
+            } else if (text.includes('officer') || text.includes('add user') || text.includes('new staff') || text.includes('permission')) {
+                if (userType !== 'admin') return `<b>Access Restricted:</b> Only Administrators can register new officers.`;
+                return `<b>To Register an Officer:</b><br>1. Go to 'Officer Management'.<br>2. Click 'Register Officer'.<br>3. Fill Name, Email, Password.<br>4. Select Permissions.<br>5. Click Register.`;
+            } else if (text.includes('chat') || text.includes('call') || text.includes('sms') || text.includes('email') || text.includes('contact')) {
+                return `<b>Using Secure Chat:</b><br>1. Go to 'Secure Chat'.<br>2. Search station.<br>3. Use Call/SMS/Email buttons.`;
+            } else if (text.includes('search') || text.includes('find') || text.includes('face') || text.includes('photo')) {
+                return `<b>How to Search:</b><br>- <b>Global Search:</b> Use the search section.<br>- <b>Face Search:</b> Upload suspect photo.`;
+            } else if (text.includes('criminal') || text.includes('history') || text.includes('record') || text.includes('delete')) {
+                return `<b>Managing Criminal Records:</b><br>- Go to 'Criminals' section.<br>- Use 'View' for details.<br>- Use 'Delete' to remove (authorized only).`;
+            } else if (text.includes('setting') || text.includes('password') || text.includes('auto delete')) {
+                return `<b>System Settings:</b><br>Go to 'Settings' to manage auto-delete, 2FA, notifications, and alerts.`;
+            } else if (text.includes('hello') || text.includes('hi') || text.includes('hey')) {
+                return `Hello Officer! 👋<br>I am your CRMS Guide. Ask me about FIR, Secure Chat, Officers, etc.`;
+            } else if (text.includes('who are you') || text.includes('your name')) {
+                return `I am the <b>CRMS AI Assistant</b>, fully integrated with this dashboard.`;
+            } else {
+                return `I'm not sure about that. Try asking about:<br>- <b>FIR Registration</b><br>- <b>Officer Management</b><br>- <b>Secure Chat</b><br>- <b>Searching Records</b>`;
+            }
+        }
+
+        // Make functions globally available for onclick handlers
+        window.viewCase = viewCase;
+        window.deleteCase = deleteCase;
+        window.toggleCaseStatus = toggleCaseStatus;
+        window.viewCriminalDetails = viewCriminalDetails;
+        window.deleteCriminalRecord = deleteCriminalRecord;
+        window.toggleOfficerStatus = toggleOfficerStatus;
+    </script>
+
+</body>
+
+</html>

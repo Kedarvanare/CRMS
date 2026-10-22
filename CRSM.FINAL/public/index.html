@@ -1,0 +1,3891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime Report Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #4a90e2;
+            --secondary: #00c6ff;
+            --danger: #e24a4a;
+            --warning: #ffcc00;
+            --success: #00cc66;
+            --dark-bg: #1a1a2e;
+            --dark-card: #16213e;
+            --dark-sidebar: #0f1422;
+            --text-light: #f1f1f1;
+            --text-muted: #aaa;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--dark-card) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Custom Styles for Secure Chat & Modals --- */
+        .station-card {
+            background: rgba(40, 44, 65, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .station-info {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .station-info h4 {
+            color: var(--text-light);
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .station-info p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 5px;
+        }
+
+        .station-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .online { background-color: var(--success); box-shadow: 0 0 10px var(--success); }
+        .offline { background-color: var(--danger); }
+
+        /* --- New Secure Communication Modals Styles --- */
+        .comm-modal-body {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .call-avatar-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .call-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            z-index: 2;
+            position: relative;
+            box-shadow: 0 0 20px rgba(74, 144, 226, 0.6);
+        }
+
+        /* Pulse Animation for Calling */
+        .pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            opacity: 0;
+            animation: pulse 2s infinite;
+        }
+
+        .pulse-ring:nth-child(2) { animation-delay: 0.5s; }
+        .pulse-ring:nth-child(3) { animation-delay: 1s; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .call-status {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        .call-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .btn-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+            color: white;
+        }
+
+        .btn-circle:hover { transform: scale(1.1); }
+        .btn-call-end { background: var(--danger); box-shadow: 0 0 15px rgba(226, 74, 74, 0.5); }
+        .btn-call-mute { background: rgba(255, 255, 255, 0.1); }
+
+        .secure-badge {
+            background: rgba(0, 204, 102, 0.15);
+            color: var(--success);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 204, 102, 0.3);
+        }
+        /* --- End Custom Styles --- */
+        
+        /* Login Page Styles */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
+        
+        .header h1 {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .header p {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: var(--text-muted);
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .login-options {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .login-card {
+            background: rgba(40, 44, 65, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(100, 100, 150, 0.2);
+        }
+        
+        .login-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+        
+        .login-card i {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .login-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        
+        .login-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .forgot-password {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 1rem;
+            transition: color 0.3s;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        
+        .forgot-password:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: rgba(30, 33, 50, 0.95);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 1.8rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.3s;
+            z-index: 1;
+        }
+        
+        .close-modal:hover {
+            color: var(--text-light);
+        }
+        
+        .modal h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #ddd;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input {
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 100, 150, 0.5);
+            background: rgba(20, 23, 40, 0.8);
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+        
+        .glass-transparent {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn {
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 15px rgba(74, 144, 226, 0.4);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #ff3333;
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: #333;
+        }
+        
+        .btn-warning:hover {
+            background: #ffdb4d;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #00e676;
+            transform: translateY(-2px);
+        }
+        
+        /* Dashboard Layout */
+        .dashboard {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background: var(--dark-sidebar);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        .sidebar-header h3 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .user-info-sidebar {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .user-details h4 {
+            color: var(--text-light);
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+        
+        .user-details p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 25px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background: rgba(74, 144, 226, 0.1);
+            color: var(--text-light);
+            border-left-color: var(--primary);
+        }
+        
+        .nav-item.active {
+            background: rgba(74, 144, 226, 0.2);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logout-btn-sidebar {
+            width: 100%;
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn-sidebar:hover {
+            background: #ff3333;
+        }
+        
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 30px;
+            overflow-y: auto;
+            min-height: 100vh;
+        }
+        
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .main-header h1 {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .main-header h1 i {
+            color: var(--primary);
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .notification-bell {
+            position: relative;
+            background: rgba(40, 44, 65, 0.8);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .notification-bell:hover {
+            background: rgba(74, 144, 226, 0.2);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Statistics Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(40, 44, 65, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        
+        .stat-card .trend {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(0, 198, 255, 0.2);
+            color: var(--secondary);
+        }
+        
+        .stat-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+        }
+        
+        .stat-card .number {
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        
+        .stat-card .progress {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 4px;
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .action-card {
+            background: rgba(40, 44, 65, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .action-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .action-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+        
+        .action-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Tables */
+        .table-container {
+            background: rgba(40, 44, 65, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 40px;
+            overflow-x: auto;
+        }
+        
+        .table-container h3 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        th {
+            background-color: rgba(74, 144, 226, 0.2);
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-pending {
+            background: rgba(255, 204, 0, 0.2);
+            color: var(--warning);
+        }
+        
+        .status-solved {
+            background: rgba(0, 204, 102, 0.2);
+            color: var(--success);
+        }
+        
+        .status-active {
+            background: rgba(74, 144, 226, 0.2);
+            color: var(--primary);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-small-primary {
+            background-color: rgba(74, 144, 226, 0.8);
+            color: white;
+        }
+        
+        .btn-small-primary:hover {
+            background-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-small-danger {
+            background-color: rgba(226, 74, 74, 0.8);
+            color: white;
+        }
+        
+        .btn-small-danger:hover {
+            background-color: var(--danger);
+            transform: translateY(-2px);
+        }
+        
+        .btn-small-warning {
+            background-color: rgba(255, 204, 0, 0.8);
+            color: #333;
+        }
+        
+        .btn-small-warning:hover {
+            background-color: var(--warning);
+            transform: translateY(-2px);
+        }
+        
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        /* Search Container */
+        .search-container {
+            background: rgba(40, 44, 65, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box input {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 100, 150, 0.5);
+            background: rgba(20, 23, 40, 0.8);
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+        
+        .search-box button {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 0 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 120px;
+        }
+        
+        /* Face Search */
+        .face-upload-area {
+            border: 2px dashed rgba(74, 144, 226, 0.5);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .face-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(74, 144, 226, 0.05);
+        }
+        
+        .face-upload-area i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        /* Criminal Cards */
+        .criminal-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .criminal-card {
+            background: rgba(40, 44, 65, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .criminal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .criminal-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .criminal-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .criminal-info h4 {
+            color: var(--text-light);
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+        }
+        
+        .criminal-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Predictive Chart */
+        .predictive-chart {
+            height: 300px;
+            background: rgba(20, 23, 40, 0.5);
+            border-radius: 10px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 20px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        .chart-bar {
+            min-width: 40px;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: height 0.5s;
+            margin: 0 10px;
+        }
+        
+        .chart-bar span {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            text-align: center;
+        }
+        
+        /* Notification Alert */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(30, 33, 50, 0.95);
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 3000;
+            max-width: 350px;
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .notification-warning {
+            border-left-color: var(--warning);
+        }
+        
+        .notification-danger {
+            border-left-color: var(--danger);
+        }
+        
+        .notification-success {
+            border-left-color: var(--success);
+        }
+        
+        /* Chatbot */
+        .chatbot-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 2000;
+        }
+        
+        .chatbot-btn {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .chatbot-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .chatbot-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            height: 500px;
+            background: rgba(30, 33, 50, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+        }
+        
+        .chatbot-header {
+            padding: 20px;
+            background: rgba(40, 44, 65, 0.9);
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chatbot-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            word-wrap: break-word;
+        }
+        
+        .bot-message {
+            background: rgba(74, 144, 226, 0.3);
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .user-message {
+            background: rgba(0, 198, 255, 0.3);
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .chatbot-input {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chatbot-input input {
+            flex: 1;
+            padding: 15px;
+            border-radius: 25px;
+            border: 1px solid rgba(100, 100, 150, 0.5);
+            background: rgba(20, 23, 40, 0.8);
+            color: var(--text-light);
+        }
+        
+        .chatbot-input button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 220px;
+            }
+            
+            .main-content {
+                margin-left: 220px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .criminal-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+                padding-top: 80px;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .criminal-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .chatbot-window {
+                width: calc(100vw - 40px);
+                right: 20px;
+            }
+
+            .station-actions { flex-direction: column; width: 100%; }
+            .btn-small { width: 100%; justify-content: center; }
+        }
+        
+        @media (max-width: 576px) {
+            .login-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .login-card {
+                max-width: 100%;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .search-box button {
+                width: 100%;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-small {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+            
+            .notification {
+                right: 20px;
+                left: 20px;
+                max-width: none;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .main-content {
+                padding: 15px;
+                padding-top: 70px;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .table-container {
+                padding: 15px;
+            }
+        }
+        
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* Form Styles for FIR */
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .form-section h4 {
+            margin-bottom: 20px;
+            color: var(--secondary);
+            font-size: 1.3rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-full-row {
+            grid-column: 1 / -1;
+        }
+        
+        textarea {
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 100, 150, 0.5);
+            background: rgba(20, 23, 40, 0.8);
+            color: var(--text-light);
+            font-size: 1rem;
+            width: 100%;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        select {
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 100, 150, 0.5);
+            background: rgba(20, 23, 40, 0.8);
+            color: var(--text-light);
+            font-size: 1rem;
+            width: 100%;
+        }
+        
+        /* Modal Wide */
+        .modal-content-wide {
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        /* Activity Feed */
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(74, 144, 226, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .activity-icon.success {
+            background: rgba(0, 204, 102, 0.2);
+        }
+        
+        .activity-icon.warning {
+            background: rgba(255, 204, 0, 0.2);
+        }
+        
+        .activity-icon.danger {
+            background: rgba(226, 74, 74, 0.2);
+        }
+        
+        .activity-content p {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .activity-content span {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container login-container" id="loginPage">
+        <div class="header">
+            <h1>Crime Report Management System</h1>
+            <p>Secure platform for managing criminal cases, FIR registrations, and law enforcement coordination. Advanced security features with real-time monitoring and predictive analytics.</p>
+        </div>
+        
+        <div class="login-options">
+            <div class="login-card" id="adminLoginBtn">
+                <i class="fas fa-user-shield"></i>
+                <h3>Admin Login</h3>
+                <p>Access full system controls, officer management, analytics, and security monitoring</p>
+            </div>
+            
+            <div class="login-card" id="officerLoginBtn">
+                <i class="fas fa-user-tie"></i>
+                <h3>Officer Login</h3>
+                <p>Access case management, FIR registration, criminal records, and reporting tools</p>
+            </div>
+        </div>
+        
+        <a href="#" class="forgot-password" id="forgotPasswordBtn">Forgot Password?</a>
+    </div>
+    
+    <div class="modal" id="adminLoginModal">
+        <div class="modal-content glass-transparent">
+            <span class="close-modal" id="closeAdminModal">&times;</span>
+            <h2>Admin Login</h2>
+            <form class="login-form" id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminEmail">Email Address</label>
+                    <input type="email" id="adminEmail" placeholder="Enter admin email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminUsername">Admin ID</label>
+                    <input type="text" id="adminUsername" placeholder="Enter admin ID" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Login as Admin</button>
+            </form>
+        </div>
+    </div>
+
+  <div class="modal" id="officerLoginModal">
+        <div class="modal-content glass-transparent">
+            <span class="close-modal" id="closeOfficerModal">&times;</span>
+            <h2>Officer Login</h2>
+            <form class="login-form" id="officerLoginForm">
+                <div class="form-group">
+                    <label for="officerEmail">Email Address</label>
+                    <input type="email" id="officerEmail" placeholder="Enter officer email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="officerPassword">Password</label>
+                    <input type="password" id="officerPassword" placeholder="Enter password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Login as Officer</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content glass-transparent">
+            <span class="close-modal" id="closeForgotModal">&times;</span>
+            <h2>Reset Password</h2>
+            <form class="login-form" id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="resetEmail">Registered Email Address</label>
+                    <input type="email" id="resetEmail" placeholder="Enter registered email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userType">Account Type</label>
+                    <select id="userType">
+                        <option value="officer">Officer Account</option>
+                        <option value="admin">Admin Account</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-warning">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="firModal">
+        <div class="modal-content modal-content-wide glass-transparent">
+            <span class="close-modal" id="closeFirModal">&times;</span>
+            <h2>Register New FIR</h2>
+            <form id="firForm" style="margin-top: 20px;">
+                <div class="form-section">
+                    <h4>Incident Details</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="crimeType">Crime Classification</label>
+                            <select id="crimeType" required>
+                                <option value="">Select Crime Type</option>
+                                <option value="Theft">Theft</option>
+                                <option value="Robbery">Robbery</option>
+                                <option value="Burglary">Burglary</option>
+                                <option value="Assault">Assault</option>
+                                <option value="Domestic Violence">Domestic Violence</option>
+                                <option value="Cybercrime">Cybercrime</option>
+                                <option value="Online Fraud">Online Fraud</option>
+                                <option value="Identity Theft">Identity Theft</option>
+                                <option value="Hacking">Hacking</option>
+                                <option value="Murder">Murder</option>
+                                <option value="Manslaughter">Manslaughter</option>
+                                <option value="Kidnapping">Kidnapping</option>
+                                <option value="Rape">Rape</option>
+                                <option value="Arson">Arson</option>
+                                <option value="Vandalism">Vandalism</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Applicable Section</label>
+                            <div id="applicableSection" style="padding: 15px; background: rgba(74, 144, 226, 0.2); border-radius: 10px; color: #fff;">Select crime type to see applicable section</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="crimeDate">Date of Incident</label>
+                            <input type="date" id="crimeDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="crimeLocation">Location</label>
+                            <input type="text" id="crimeLocation" placeholder="Enter location of incident" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group form-full-row">
+                            <label for="crimeDescription">Description of Incident</label>
+                            <textarea id="crimeDescription" placeholder="Provide detailed description of what happened..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Complainer Details</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="complainerName">Full Name</label>
+                            <input type="text" id="complainerName" placeholder="Enter complainer's name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="complainerAadhar">Aadhar Card Number</label>
+                            <input type="text" id="complainerAadhar" placeholder="XXXX-XXXX-XXXX" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="complainerContact">Contact Number</label>
+                            <input type="tel" id="complainerContact" placeholder="Enter contact number" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="complainerAddress">Address</label>
+                            <input type="text" id="complainerAddress" placeholder="Enter residential address" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Criminal Details</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="criminalName">Criminal Name (if known)</label>
+                            <input type="text" id="criminalName" placeholder="Enter criminal name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="criminalPhoto">Upload Criminal Photo</label>
+                            <input type="file" id="criminalPhoto" accept="image/*">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="criminalAge">Approximate Age</label>
+                            <input type="number" id="criminalAge" placeholder="Age" min="1" max="120">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="criminalGender">Gender</label>
+                            <select id="criminalGender">
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="criminalOccupation">Occupation</label>
+                            <input type="text" id="criminalOccupation" placeholder="Enter occupation">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group form-full-row">
+                            <label for="criminalAddress">Last Known Address</label>
+                            <textarea id="criminalAddress" rows="2" placeholder="Enter criminal's address if known"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group form-full-row">
+                            <label for="criminalDescription">Physical Description</label>
+                            <textarea id="criminalDescription" rows="3" placeholder="Describe physical features, clothing, etc."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Register FIR</button>
+                    <button type="button" class="btn btn-danger" id="cancelFirBtn" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="modal" id="filterCasesModal">
+        <div class="modal-content glass-transparent">
+            <span class="close-modal" id="closeFilterModal">&times;</span>
+            <h2>Filter Case Files</h2>
+            <form id="filterCasesForm" style="margin-top: 20px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filterCaseId">Case ID</label>
+                        <input type="text" id="filterCaseId" placeholder="e.g. CR-2023-001">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterCrimeType">Crime Type</label>
+                        <select id="filterCrimeType" class="crime-type-select">
+                            <option value="">All Types</option>
+                            </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filterCriminalName">Criminal Name</label>
+                        <input type="text" id="filterCriminalName" placeholder="e.g. Rohan">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterDate">Date</label>
+                        <input type="date" id="filterDate">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-full-row">
+                        <label for="filterStatus">Case Status</label>
+                        <select id="filterStatus" class="crime-type-select">
+                            <option value="">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Solved">Solved</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Apply Filters</button>
+                    <button type="button" class="btn btn-warning" id="clearFilterBtn" style="flex: 1;">Clear Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="secureCallModal">
+        <div class="modal-content glass-transparent" style="max-width: 400px; border: 1px solid var(--primary);">
+            <div class="comm-modal-body">
+                <div class="secure-badge"><i class="fas fa-lock"></i> End-to-End Encrypted</div>
+                
+                <div class="call-avatar-container">
+                    <div class="pulse-ring"></div>
+                    <div class="pulse-ring"></div>
+                    <div class="call-avatar" id="callAvatarIcon">M</div>
+                </div>
+                
+                <h2 id="callNameDisplay" style="margin-bottom: 5px;">Mumbai HQ</h2>
+                <p id="callNumberDisplay" style="color: #aaa; margin-bottom: 15px;">+91 22 2345 6789</p>
+                <div class="call-status">Connecting Secure Line...</div>
+                
+                <div class="call-actions">
+                    <button class="btn-circle btn-call-mute"><i class="fas fa-microphone-slash"></i></button>
+                    <button class="btn-circle btn-call-end" onclick="closeCommunicationModal('secureCallModal')"><i class="fas fa-phone-slash"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="secureSmsModal">
+        <div class="modal-content glass-transparent">
+            <span class="close-modal" onclick="closeCommunicationModal('secureSmsModal')">&times;</span>
+            <h3 style="color: var(--warning); margin-bottom: 20px;"><i class="fas fa-comment-alt"></i> Secure SMS</h3>
+            <div class="secure-badge"><i class="fas fa-shield-alt"></i> Logged & Encrypted</div>
+            
+            <form id="smsForm">
+                <div class="form-group">
+                    <label>To Station</label>
+                    <input type="text" id="smsToInput" readonly style="background: rgba(0,0,0,0.3); cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label>Message (Max 160 chars)</label>
+                    <textarea id="smsBodyInput" rows="4" placeholder="Type classified message..." required maxlength="160" style="font-family: monospace;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-warning" style="margin-top: 10px;">Send Encrypted SMS</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="secureEmailModal">
+        <div class="modal-content glass-transparent" style="max-width: 600px;">
+            <span class="close-modal" onclick="closeCommunicationModal('secureEmailModal')">&times;</span>
+            <h3 style="color: var(--danger); margin-bottom: 20px;"><i class="fas fa-envelope-open-text"></i> Official Mail</h3>
+            
+            <form id="emailForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>To</label>
+                        <input type="text" id="emailToInput" readonly style="background: rgba(0,0,0,0.3);">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select>
+                            <option>Normal</option>
+                            <option>High</option>
+                            <option style="color: red; font-weight: bold;">URGENT / RED ALERT</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="emailSubjectInput" placeholder="Case Ref / Subject..." required>
+                </div>
+                <div class="form-group">
+                    <label>Body</label>
+                    <textarea id="emailBodyInput" rows="6" placeholder="Enter official communication details..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.8rem; color: #aaa;"><i class="fas fa-paperclip"></i> Attach Case File (Optional)</label>
+                    <input type="file">
+                </div>
+                <button type="submit" class="btn btn-danger" style="margin-top: 10px;">Dispatch Secure Mail</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="chatbot-container">
+        <button class="chatbot-btn" id="chatbotToggle">
+            <i class="fas fa-robot"></i>
+        </button>
+        
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                <h3>CRMS Assistant</h3>
+                <span style="color: #4a90e2; font-size: 0.9rem;">Online</span>
+            </div>
+            
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="message bot-message">
+                    Hello! I'm your CRMS assistant. How can I help you today?
+                </div>
+            </div>
+            
+            <div class="chatbot-input">
+                <input type="text" id="chatbotInput" placeholder="Type your question...">
+                <button id="sendChatbotMessage"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <div id="notificationTitle" style="font-weight: 600; margin-bottom: 5px;">Notification</div>
+        <div id="notificationMessage">This is a notification message.</div>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+        <div class="dashboard-container">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>CRMS</h3>
+                    <p>Police Department</p>
+                </div>
+                <div class="user-info-sidebar">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <h4 id="sidebarUserName">Admin User</h4>
+                        <p id="sidebarUserRole">Administrator</p>
+                    </div>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active" data-section="dashboard-section"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="#" class="nav-item" data-section="cases-section"><i class="fas fa-folder-open"></i> Cases</a>
+                    <a href="#" class="nav-item" data-section="fir-section"><i class="fas fa-file-alt"></i> Register FIR</a>
+                    <a href="#" class="nav-item" data-section="criminals-section"><i class="fas fa-user-friends"></i> Criminals</a>
+                    <a href="#" class="nav-item" data-section="secure-chat-section"><i class="fas fa-shield-alt"></i> Secure Chat</a>
+                    <a href="#" class="nav-item" data-section="search-section"><i class="fas fa-search"></i> Search</a>
+                    <div id="adminSections" style="display: none;">
+                        <a href="#" class="nav-item" data-section="officers-section"><i class="fas fa-user-tie"></i> Officers</a>
+                        <a href="#" class="nav-item" data-section="history-section"><i class="fas fa-history"></i> Logs</a>
+                        <a href="#" class="nav-item" data-section="settings-section"><i class="fas fa-cog"></i> Settings</a>
+                    </div>
+                </nav>
+                <div class="sidebar-footer">
+                    <button class="logout-btn-sidebar" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </aside>
+            
+            <main class="main-content">
+                <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+                
+                <header class="main-header">
+                    <h1 id="pageTitle"><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
+                    <div class="header-actions">
+                        <span id="currentDateTime"></span>
+                        <button class="notification-bell" id="notificationBell">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge">3</span>
+                        </button>
+                    </div>
+                </header>
+                
+                <div id="dashboard-section" class="content-section active">
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <h3>Total Cases</h3>
+                                    <div class="number" id="totalCases">0</div>
+                                </div>
+                                <i class="fas fa-folder"></i>
+                            </div>
+                            <span class="trend">+5% <i class="fas fa-arrow-up"></i></span>
+                            <div class="progress-bar"><div class="progress" style="width: 70%"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <h3>Pending</h3>
+                                    <div class="number" id="pendingCases">0</div>
+                                </div>
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <span class="trend">Active</span>
+                            <div class="progress-bar"><div class="progress" style="width: 45%; background: var(--warning)"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <h3>Solved</h3>
+                                    <div class="number" id="solvedCases">0</div>
+                                </div>
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <span class="trend">+12% <i class="fas fa-arrow-up"></i></span>
+                            <div class="progress-bar"><div class="progress" style="width: 60%; background: var(--success)"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <h3>Criminal Records</h3>
+                                    <div class="number" id="criminalRecords">0</div>
+                                </div>
+                                <i class="fas fa-fingerprint"></i>
+                            </div>
+                            <div class="progress-bar"><div class="progress" style="width: 85%"></div></div>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 20px; color: var(--text-light);">Quick Actions</h3>
+                    <div class="quick-actions">
+                        <div class="action-card" id="quickFirBtn">
+                            <i class="fas fa-file-signature"></i>
+                            <h3>Register FIR</h3>
+                            <p>File a new report</p>
+                        </div>
+                        <div class="action-card" id="quickSearchBtn">
+                            <i class="fas fa-search"></i>
+                            <h3>Global Search</h3>
+                            <p>Find records fast</p>
+                        </div>
+                        <div class="action-card" id="quickCriminalBtn">
+                            <i class="fas fa-user-lock"></i>
+                            <h3>Criminals</h3>
+                            <p>View database</p>
+                        </div>
+                        <div class="action-card" id="quickReportBtn">
+                            <i class="fas fa-file-download"></i>
+                            <h3>Generate Report</h3>
+                            <p>Download analytics</p>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <h3><i class="fas fa-history"></i> Recent Cases</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Case ID</th>
+                                    <th>Type</th>
+                                    <th>Complainer</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="casesTableBody"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="glass-card" style="padding: 20px;">
+                        <h3><i class="fas fa-chart-pie"></i> Crime Analytics</h3>
+                        <div class="predictive-chart" id="predictiveChart"></div>
+                    </div>
+                </div>
+                
+                <div id="secure-chat-section" class="content-section">
+                    <div class="glass-card" style="padding: 20px; margin-bottom: 30px;">
+                        <h3><i class="fas fa-network-wired"></i> Secure Inter-Station Network</h3>
+                        <p style="color: #aaa; margin-top: 5px;">Direct secure line to other registered police stations. All communications are encrypted.</p>
+                    </div>
+
+                    <div class="search-container">
+                        <div class="search-box">
+                            <input type="text" id="stationSearch" placeholder="Search for a station (e.g., Mumbai, Pune)...">
+                            <button><i class="fas fa-search"></i> Search</button>
+                        </div>
+                    </div>
+
+                    <div class="station-list">
+                        <div class="station-card">
+                            <div class="station-info">
+                                <h4><span class="status-dot online"></span> Mumbai HQ (Main Control)</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> Crawford Market, Mumbai</p>
+                                <p><strong>ID:</strong> STN-MUM-01 | <strong>Officer:</strong> ACP R. K. Singh</p>
+                                <p><strong>Email:</strong> control.mumbai@police.gov.in</p>
+                                <p><strong>Secure Line:</strong> +91 22 2345 6789</p>
+                            </div>
+                            <div class="station-actions">
+                                <button class="btn-small btn-small-primary" onclick="initiateCall('Mumbai HQ', '+91 22 2345 6789')"><i class="fas fa-phone"></i> Call</button>
+                                <button class="btn-small btn-small-warning" onclick="sendSMS('Mumbai HQ', '+91 98765 43210')"><i class="fas fa-comment-alt"></i> SMS</button>
+                                <button class="btn-small btn-small-danger" onclick="sendEmail('Mumbai HQ', 'control.mumbai@police.gov.in')"><i class="fas fa-envelope"></i> Email</button>
+                            </div>
+                        </div>
+
+                        <div class="station-card">
+                            <div class="station-info">
+                                <h4><span class="status-dot online"></span> Thane Rural Station</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> Thane West, Thane</p>
+                                <p><strong>ID:</strong> STN-THN-04 | <strong>Officer:</strong> PI V. Deshmukh</p>
+                                <p><strong>Email:</strong> thane.rural@police.gov.in</p>
+                                <p><strong>Secure Line:</strong> +91 22 8765 4321</p>
+                            </div>
+                            <div class="station-actions">
+                                <button class="btn-small btn-small-primary" onclick="initiateCall('Thane Rural', '+91 22 8765 4321')"><i class="fas fa-phone"></i> Call</button>
+                                <button class="btn-small btn-small-warning" onclick="sendSMS('Thane Rural', '+91 87654 32109')"><i class="fas fa-comment-alt"></i> SMS</button>
+                                <button class="btn-small btn-small-danger" onclick="sendEmail('Thane Rural', 'thane.rural@police.gov.in')"><i class="fas fa-envelope"></i> Email</button>
+                            </div>
+                        </div>
+
+                        <div class="station-card">
+                            <div class="station-info">
+                                <h4><span class="status-dot online"></span> Pune City Station</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> Shivajinagar, Pune</p>
+                                <p><strong>ID:</strong> STN-PUN-02 | <strong>Officer:</strong> DCP A. Kulkarni</p>
+                                <p><strong>Email:</strong> pune.city@police.gov.in</p>
+                                <p><strong>Secure Line:</strong> +91 20 2553 1234</p>
+                            </div>
+                            <div class="station-actions">
+                                <button class="btn-small btn-small-primary" onclick="initiateCall('Pune City', '+91 20 2553 1234')"><i class="fas fa-phone"></i> Call</button>
+                                <button class="btn-small btn-small-warning" onclick="sendSMS('Pune City', '+91 76543 21098')"><i class="fas fa-comment-alt"></i> SMS</button>
+                                <button class="btn-small btn-small-danger" onclick="sendEmail('Pune City', 'pune.city@police.gov.in')"><i class="fas fa-envelope"></i> Email</button>
+                            </div>
+                        </div>
+
+                        <div class="station-card">
+                            <div class="station-info">
+                                <h4><span class="status-dot offline"></span> Nashik Control Room</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> Gangapur Road, Nashik</p>
+                                <p><strong>ID:</strong> STN-NSK-07 | <strong>Officer:</strong> PI S. Jadhav</p>
+                                <p><strong>Email:</strong> nashik.control@police.gov.in</p>
+                                <p><strong>Secure Line:</strong> +91 253 230 5678</p>
+                            </div>
+                            <div class="station-actions">
+                                <button class="btn-small btn-small-primary" onclick="initiateCall('Nashik Control', '+91 253 230 5678')"><i class="fas fa-phone"></i> Call</button>
+                                <button class="btn-small btn-small-warning" onclick="sendSMS('Nashik Control', '+91 99887 76655')"><i class="fas fa-comment-alt"></i> SMS</button>
+                                <button class="btn-small btn-small-danger" onclick="sendEmail('Nashik Control', 'nashik.control@police.gov.in')"><i class="fas fa-envelope"></i> Email</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cases-section" class="content-section">
+                    <div class="action-buttons" style="margin-bottom: 20px;">
+                        <button class="btn-small btn-small-primary" id="filterCasesBtn"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn-small btn-small-primary" id="exportCasesBtn"><i class="fas fa-file-export"></i> Export</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Case ID</th>
+                                    <th>Type</th>
+                                    <th>Complainer</th>
+                                    <th>Criminal</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allCasesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="fir-section" class="content-section">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <button class="btn btn-primary" id="openFirFormBtn" style="max-width: 300px; margin: 0 auto;">
+                            <i class="fas fa-plus-circle"></i> Open FIR Registration Form
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="criminals-section" class="content-section">
+                    <div class="search-box">
+                        <input type="text" id="searchCriminal" placeholder="Search criminal by name or ID...">
+                        <button id="searchCriminalBtn"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                    <div class="action-buttons" style="margin-bottom: 20px;">
+                        <button class="btn-small btn-small-primary" id="viewAllCriminalsBtn">View All</button>
+                        <button class="btn-small btn-small-warning" id="filterCriminalsBtn">Filter</button>
+                    </div>
+                    <div class="criminal-cards" id="criminalRecordsList"></div>
+                </div>
+                
+                <div id="search-section" class="content-section">
+                    <div class="search-container">
+                        <h3>Global Database Search</h3>
+                        <div class="search-box">
+                            <input type="text" id="globalSearch" placeholder="Search cases, criminals, officers...">
+                            <button id="searchBtn">Search</button>
+                        </div>
+                        <div id="searchResults"></div>
+                        
+                        <div class="face-upload-area" id="faceUploadArea">
+                            <i class="fas fa-camera"></i>
+                            <h3>Face Recognition Search</h3>
+                            <p>Click to upload suspect photo for database matching</p>
+                        </div>
+                        <div id="faceSearchResults" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+                
+                <div id="officers-section" class="content-section">
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-primary" id="registerNewOfficerBtn" style="max-width: 200px;">
+                            <i class="fas fa-user-plus"></i> Register Officer
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="officersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="history-section" class="content-section">
+                    <div class="table-container">
+                        <h3>Login History</h3>
+                        <table style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Login Time</th>
+                                    <th>Logout Time</th>
+                                    <th>IP Address</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loginHistoryTable">
+                                </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="glass-card" style="padding: 20px; margin-top: 20px;">
+                        <h3>Recent System Activities</h3>
+                        <div id="activityFeed">
+                            </div>
+                    </div>
+                </div>
+                
+                <div id="settings-section" class="content-section">
+                    <div class="glass-card" style="padding: 30px; max-width: 600px; margin: 0 auto;">
+                        <h3 style="margin-bottom: 20px;">System Configuration</h3>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div>
+                                <h4>Auto-Delete Expired Records</h4>
+                                <p style="font-size: 0.9rem; color: #aaa;">Automatically remove records after sentence completion</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="autoDeleteToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div>
+                                <h4>Email Notifications</h4>
+                                <p style="font-size: 0.9rem; color: #aaa;">Receive alerts for critical updates</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="emailNotificationsToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div>
+                                <h4>2-Factor Authentication</h4>
+                                <p style="font-size: 0.9rem; color: #aaa;">Require OTP for officer login</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="twoFactorToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div>
+                                <h4>Real-Time Alerts</h4>
+                                <p style="font-size: 0.9rem; color: #aaa;">Show popup notifications for new cases</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="realTimeAlertsToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <button class="btn btn-primary" id="saveSettingsBtn" style="margin-top: 20px;">Save Configuration</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // INITIALIZATION & DATA
+        // ============================================
+        
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const dashboard = document.getElementById('dashboard');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const officerLoginBtn = document.getElementById('officerLoginBtn');
+        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+        
+        const adminLoginModal = document.getElementById('adminLoginModal');
+        const officerLoginModal = document.getElementById('officerLoginModal');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        
+        const closeAdminModal = document.getElementById('closeAdminModal');
+        const closeOfficerModal = document.getElementById('closeOfficerModal');
+        const closeForgotModal = document.getElementById('closeForgotModal');
+        
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const officerLoginForm = document.getElementById('officerLoginForm');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const logoutBtnSidebar = document.getElementById('logoutBtnSidebar');
+        const userAvatar = document.getElementById('userAvatar');
+        const sidebarUserName = document.getElementById('sidebarUserName');
+        const sidebarUserRole = document.getElementById('sidebarUserRole');
+        const pageTitle = document.getElementById('pageTitle');
+        const notificationBell = document.getElementById('notificationBell');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const currentDateTime = document.getElementById('currentDateTime');
+        
+        // Navigation
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+        const adminSections = document.getElementById('adminSections');
+        
+        // Dashboard buttons
+        const quickFirBtn = document.getElementById('quickFirBtn');
+        const quickSearchBtn = document.getElementById('quickSearchBtn');
+        const quickReportBtn = document.getElementById('quickReportBtn');
+        const quickCriminalBtn = document.getElementById('quickCriminalBtn');
+        const openFirFormBtn = document.getElementById('openFirFormBtn');
+        const filterCasesBtn = document.getElementById('filterCasesBtn');
+        const exportCasesBtn = document.getElementById('exportCasesBtn');
+        const viewAllCriminalsBtn = document.getElementById('viewAllCriminalsBtn');
+        const filterCriminalsBtn = document.getElementById('filterCriminalsBtn');
+        const searchCriminalBtn = document.getElementById('searchCriminalBtn');
+        const searchCriminal = document.getElementById('searchCriminal');
+        const registerNewOfficerBtn = document.getElementById('registerNewOfficerBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        
+        // FIR Modal
+        const firModal = document.getElementById('firModal');
+        const closeFirModal = document.getElementById('closeFirModal');
+        const cancelFirBtn = document.getElementById('cancelFirBtn');
+        const crimeTypeSelect = document.getElementById('crimeType');
+        const applicableSection = document.getElementById('applicableSection');
+        const firForm = document.getElementById('firForm');
+        
+        // Filter Modal
+        const filterCasesModal = document.getElementById('filterCasesModal');
+        const closeFilterModal = document.getElementById('closeFilterModal');
+        const filterCasesForm = document.getElementById('filterCasesForm');
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+        const filterCrimeTypeSelect = document.getElementById('filterCrimeType');
+
+        // Search
+        const globalSearch = document.getElementById('globalSearch');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchResults = document.getElementById('searchResults');
+        
+        // Analytics
+        const predictiveChart = document.getElementById('predictiveChart');
+        
+        // Face Search
+        const faceUploadArea = document.getElementById('faceUploadArea');
+        const faceSearchResults = document.getElementById('faceSearchResults');
+        
+        // Chatbot
+        const chatbotToggle = document.getElementById('chatbotToggle');
+        const chatbotWindow = document.getElementById('chatbotWindow');
+        const chatbotMessages = document.getElementById('chatbotMessages');
+        const chatbotInput = document.getElementById('chatbotInput');
+        const sendChatbotMessage = document.getElementById('sendChatbotMessage');
+        
+        // Notification
+        const notification = document.getElementById('notification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationMessage = document.getElementById('notificationMessage');
+        
+        // Tables
+        const casesTableBody = document.getElementById('casesTableBody');
+        const allCasesTableBody = document.getElementById('allCasesTableBody');
+        const criminalRecordsList = document.getElementById('criminalRecordsList');
+        const officersTableBody = document.getElementById('officersTableBody');
+        const loginHistoryTable = document.getElementById('loginHistoryTable');
+        
+        // Stats
+        const totalCases = document.getElementById('totalCases');
+        const pendingCases = document.getElementById('pendingCases');
+        const solvedCases = document.getElementById('solvedCases');
+        const criminalRecords = document.getElementById('criminalRecords');
+        
+        // Settings
+        const autoDeleteToggle = document.getElementById('autoDeleteToggle');
+        const emailNotificationsToggle = document.getElementById('emailNotificationsToggle');
+        const twoFactorToggle = document.getElementById('twoFactorToggle');
+        const realTimeAlertsToggle = document.getElementById('realTimeAlertsToggle');
+        
+        // Data
+        const crimeSections = {
+            "Murder": "IPC Section 302",
+            "Manslaughter": "IPC Section 304",
+            "Assault": "IPC Section 351",
+            "Battery": "IPC Section 352",
+            "Rape": "IPC Section 376",
+            "Robbery": "IPC Section 392",
+            "Kidnapping": "IPC Section 363",
+            "Domestic Violence": "Protection of Women from Domestic Violence Act, 2005",
+            "Identity Theft": "IPC Section 66C",
+            "Hacking": "IPC Section 66",
+            "Online Fraud": "IPC Section 420",
+            "Child Pornography": "POCSO Act, 2012 & IT Act Section 67B",
+            "Cyber Flashing": "IT Act Section 66E",
+            "Burglary": "IPC Section 454",
+            "Theft": "IPC Section 379",
+            "Motor Vehicle Theft": "IPC Section 379A",
+            "Arson": "IPC Section 435",
+            "Vandalism": "IPC Section 425",
+            "Criminal Damage": "IPC Section 427"
+        };
+        
+        let sampleCases = [];
+        let criminalRecordsData = [];
+        let officersData = [];
+        let loginHistoryData = [];
+        
+        async function fetchAllData() {
+            try {
+                const casesRes = await fetch('/api/cases');
+                if (casesRes.ok) sampleCases = await casesRes.json();
+                
+                const crimRes = await fetch('/api/criminals');
+                if (crimRes.ok) criminalRecordsData = await crimRes.json();
+                
+                const offRes = await fetch('/api/officers');
+                if (offRes.ok) officersData = await offRes.json();
+                
+                const loginRes = await fetch('/api/login-history');
+                if (loginRes.ok) loginHistoryData = await loginRes.json();
+            } catch (err) {
+                console.error("Error fetching data:", err);
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', fetchAllData);
+        
+        // App State
+        let currentUser = null;
+        let userType = null;
+        let userInitial = 'A';
+        let notificationCount = 3;
+        
+        // Page titles mapping
+        const pageTitles = {
+            'dashboard-section': { title: 'Dashboard Overview', icon: 'fa-tachometer-alt' },
+            'cases-section': { title: 'Case Files', icon: 'fa-folder-open' },
+            'fir-section': { title: 'Register FIR', icon: 'fa-file-alt' },
+            'criminals-section': { title: 'Criminal Records', icon: 'fa-user-friends' },
+            'analytics-section': { title: 'Analytics', icon: 'fa-chart-line' },
+            'search-section': { title: 'Global Search', icon: 'fa-search' },
+            'face-search-section': { title: 'Face Search', icon: 'fa-camera' },
+            'officers-section': { title: 'Officer Management', icon: 'fa-user-tie' },
+            'history-section': { title: 'Login History', icon: 'fa-history' },
+            'settings-section': { title: 'System Settings', icon: 'fa-cog' },
+            'secure-chat-section': { title: 'Secure Chat Network', icon: 'fa-shield-alt' } // NEW
+        };
+        
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        
+        // Login Page Events
+        adminLoginBtn.addEventListener('click', () => openModal(adminLoginModal));
+        officerLoginBtn.addEventListener('click', () => openModal(officerLoginModal));
+        forgotPasswordBtn.addEventListener('click', () => openModal(forgotPasswordModal));
+        
+        closeAdminModal.addEventListener('click', () => closeModal(adminLoginModal));
+        closeOfficerModal.addEventListener('click', () => closeModal(officerLoginModal));
+        closeForgotModal.addEventListener('click', () => closeModal(forgotPasswordModal));
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === adminLoginModal) closeModal(adminLoginModal);
+            if (e.target === officerLoginModal) closeModal(officerLoginModal);
+            if (e.target === forgotPasswordModal) closeModal(forgotPasswordModal);
+            if (e.target === firModal) closeModal(firModal);
+            if (e.target === filterCasesModal) closeModal(filterCasesModal);
+        });
+        
+        // Form Submissions
+        adminLoginForm.addEventListener('submit', handleAdminLogin);
+        officerLoginForm.addEventListener('submit', handleOfficerLogin);
+        forgotPasswordForm.addEventListener('submit', handleForgotPassword);
+        firForm.addEventListener('submit', handleFirSubmit);
+        filterCasesForm.addEventListener('submit', handleFilterSubmit);
+        
+        // Navigation
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = item.getAttribute('data-section');
+                navigateToSection(sectionId);
+                
+                // Automatically open FIR modal if navigating to FIR section
+                if (sectionId === 'fir-section') {
+                    openModal(firModal);
+                }
+            });
+        });
+        
+        // Mobile Menu
+        menuToggle.addEventListener('click', toggleSidebar);
+        
+        // Dashboard Quick Actions
+        quickFirBtn.addEventListener('click', () => {
+            navigateToSection('fir-section');
+            openModal(firModal);
+        });
+        
+        quickSearchBtn.addEventListener('click', () => navigateToSection('search-section'));
+        quickCriminalBtn.addEventListener('click', () => navigateToSection('criminals-section'));
+        quickReportBtn.addEventListener('click', handleGenerateReport);
+        
+        // FIR Modal
+        openFirFormBtn.addEventListener('click', () => openModal(firModal));
+        closeFirModal.addEventListener('click', () => confirmCancel(firModal, firForm));
+        cancelFirBtn.addEventListener('click', () => confirmCancel(firModal, firForm));
+        
+        // Crime type change
+        crimeTypeSelect.addEventListener('change', updateCrimeSection);
+        
+        // Case Management
+        filterCasesBtn.addEventListener('click', openFilterModal);
+        exportCasesBtn.addEventListener('click', exportCases);
+        
+        // Filter Modal Events
+        closeFilterModal.addEventListener('click', () => closeModal(filterCasesModal));
+        clearFilterBtn.addEventListener('click', clearCaseFilters);
+
+        // Criminal Records
+        viewAllCriminalsBtn.addEventListener('click', showAllCriminalsModal);
+        filterCriminalsBtn.addEventListener('click', filterCriminals);
+        searchCriminalBtn.addEventListener('click', searchCriminalRecords);
+        searchCriminal.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchCriminalRecords();
+        });
+        
+        // Search
+        searchBtn.addEventListener('click', performGlobalSearch);
+        globalSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performGlobalSearch();
+        });
+        
+        // Face Search
+        faceUploadArea.addEventListener('click', handleFaceSearch);
+        
+        // Officer Management
+        registerNewOfficerBtn.addEventListener('click', registerNewOfficer);
+        
+        // Settings
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        
+        // Chatbot
+        chatbotToggle.addEventListener('click', toggleChatbot);
+        sendChatbotMessage.addEventListener('click', sendChatMessage);
+        chatbotInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+        
+        // Notification Bell
+        notificationBell.addEventListener('click', showNotifications);
+        
+        // Logout
+        logoutBtnSidebar.addEventListener('click', handleLogout);
+        
+        // ============================================
+        // FUNCTIONS
+        // ============================================
+        
+        // ============================================
+        // NEW ADVANCED SECURE CHAT FUNCTIONS
+        // ============================================
+
+        // Helper to close specific modal
+        window.closeCommunicationModal = function(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 1. Call Function
+        window.initiateCall = function(name, number) {
+            const modal = document.getElementById('secureCallModal');
+            document.getElementById('callNameDisplay').textContent = name;
+            document.getElementById('callNumberDisplay').textContent = number;
+            document.getElementById('callAvatarIcon').textContent = name.charAt(0);
+            
+            modal.style.display = 'flex';
+            
+            // Auto close after 5 seconds just for demo (Optional)
+            /* setTimeout(() => {
+                modal.style.display = 'none';
+                showNotification('Call Ended', `Secure call with ${name} duration: 00:05`, 'info');
+            }, 5000); */
+        };
+
+        // 2. SMS Function
+        window.sendSMS = function(name, number) {
+            const modal = document.getElementById('secureSmsModal');
+            document.getElementById('smsToInput').value = `${name} (${number})`;
+            document.getElementById('smsBodyInput').value = ''; // clear previous
+            modal.style.display = 'flex';
+            
+            // Handle Submit within the modal logic
+            document.getElementById('smsForm').onsubmit = function(e) {
+                e.preventDefault();
+                modal.style.display = 'none';
+                showNotification('SMS Sent', `Encrypted message sent to ${name}.`, 'success');
+                addActivity(`Secure SMS sent to ${name}`);
+            }
+        };
+
+        // 3. Email Function
+        window.sendEmail = function(name, email) {
+            const modal = document.getElementById('secureEmailModal');
+            document.getElementById('emailToInput').value = email;
+            document.getElementById('emailSubjectInput').value = '';
+            document.getElementById('emailBodyInput').value = '';
+            modal.style.display = 'flex';
+
+            // Handle Submit
+            document.getElementById('emailForm').onsubmit = function(e) {
+                e.preventDefault();
+                modal.style.display = 'none';
+                showNotification('Email Dispatched', `Official mail sent to ${name} successfully.`, 'success');
+                addActivity(`Official Email sent to ${name}`);
+            }
+        };
+
+        // Modal Functions
+        function openModal(modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        function confirmCancel(modal, form) {
+            if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+                closeModal(modal);
+                form.reset();
+                applicableSection.textContent = 'Select crime type to see applicable section';
+            }
+        }
+        
+        // Login Functions
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, username, password, type: 'admin' })
+                });
+                const data = await res.json();
+                
+                if (data.success && data.user.role === 'Admin') {
+                    currentUser = data.user.name;
+                    userType = 'admin';
+                    userInitial = data.user.name.charAt(0);
+                    
+                    await fetchAllData();
+                    loginUser();
+                    
+                    // Add Login History
+                    fetch('/api/login-history', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user: currentUser, type: 'Admin', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Success'})});
+                    
+                    setTimeout(() => {
+                        showNotification('Security Alert', 'New login detected from your account.', 'warning');
+                    }, 1000);
+                } else {
+                    showNotification('Login Failed', 'Invalid admin credentials.', 'danger');
+                    fetch('/api/login-history', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user: 'Unknown Admin', type: 'Admin', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Failed'})});
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification('Error', 'Server error during login.', 'danger');
+            }
+        }
+        
+        async function handleOfficerLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('officerEmail').value.trim();
+            const password = document.getElementById('officerPassword').value;
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, type: 'officer' })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    const officer = data.user;
+                    if (officer.status === 'Inactive') {
+                        showNotification('Account Locked', 'Your account is deactivated. Contact Admin.', 'danger');
+                        return;
+                    }
+
+                    currentUser = `${officer.name} (${officer.id})`;
+                    userType = 'officer';
+                    userInitial = officer.name.charAt(0).toUpperCase();
+                    
+                    await fetchAllData();
+                    loginUser();
+                    
+                    addActivity(`Officer logged in: ${officer.id}`);
+                    fetch('/api/login-history', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user: currentUser, type: 'Officer', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Success'})});
+                } else {
+                    showNotification('Login Failed', 'Incorrect password or email.', 'danger');
+                    fetch('/api/login-history', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user: 'Unknown Officer', type: 'Officer', login: new Date().toLocaleString(), logout: 'N/A', ip: '127.0.0.1', status: 'Failed'})});
+                }
+            } catch (err) {
+                showNotification('Error', 'Server error during login.', 'danger');
+            }
+        }
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            const userType = document.getElementById('userType').value;
+            
+            showNotification('Password Reset', `Password reset link has been sent to ${email} for ${userType} account.`, 'success');
+            closeModal(forgotPasswordModal);
+        }
+        
+        function loginUser() {
+            loginPage.style.display = 'none';
+            dashboard.style.display = 'block';
+            
+            // Update user info
+            sidebarUserName.textContent = currentUser;
+            sidebarUserRole.textContent = userType === 'admin' ? 'Administrator' : 'Officer';
+            userAvatar.textContent = userInitial;
+            userAvatar.style.background = userType === 'admin' 
+                ? 'linear-gradient(135deg, #4a90e2, #00c6ff)' 
+                : 'linear-gradient(135deg, #7b4397, #dc2430)';
+            
+            // Show admin sections if admin
+            if (userType === 'admin') {
+                adminSections.style.display = 'block';
+            }
+            
+            // Close login modals
+            closeModal(adminLoginModal);
+            closeModal(officerLoginModal);
+            
+            // Initialize dashboard
+            updateDashboardStats();
+            loadCasesTable();
+            loadAllCasesTable();
+            loadCriminalRecords();
+            loadOfficersTable();
+            loadLoginHistory();
+            initPredictiveChart();
+            updateDateTime();
+            startClock();
+            
+            // Check for expired records
+            checkExpiredRecords();
+            
+            // Show welcome notification
+            showNotification('Login Successful', `Welcome back, ${currentUser}!`, 'success');
+            
+            // Show security alert for admin
+            if (userType === 'admin') {
+                setTimeout(() => {
+                    showNotification('Security Alert', 'Enhanced security features are active. All login attempts are monitored.', 'warning');
+                }, 2000);
+            }
+        }
+        
+        function handleLogout() {
+            const logoutTime = new Date().toLocaleString();
+            console.log(`${userType} logout at ${logoutTime}`);
+            
+            // Reset forms
+            adminLoginForm.reset();
+            officerLoginForm.reset();
+            firForm.reset();
+            
+            // Return to login page
+            dashboard.style.display = 'none';
+            loginPage.style.display = 'flex';
+            
+            // Hide sidebar on mobile
+            sidebar.classList.remove('active');
+            
+            // Show logout notification
+            showNotification('Logged Out', 'You have been successfully logged out.', 'success');
+            
+            // Reset user state
+            currentUser = null;
+            userType = null;
+            notificationCount = 3;
+            notificationBadge.textContent = notificationCount;
+        }
+        
+        // Navigation Functions
+        function navigateToSection(sectionId) {
+            // Update active nav item
+            navItems.forEach(nav => nav.classList.remove('active'));
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+            
+            // Show selected section
+            contentSections.forEach(section => section.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update page title
+            if (pageTitles[sectionId]) {
+                pageTitle.innerHTML = `<i class="fas ${pageTitles[sectionId].icon}"></i> ${pageTitles[sectionId].title}`;
+            }
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+            }
+        }
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+        }
+        
+        // FIR Functions
+        function updateCrimeSection() {
+            const selectedCrime = crimeTypeSelect.value;
+            if (selectedCrime && crimeSections[selectedCrime]) {
+                applicableSection.textContent = crimeSections[selectedCrime];
+            } else {
+                applicableSection.textContent = 'Select crime type to see applicable section';
+            }
+        }
+        
+        async function handleFirSubmit(e) {
+            e.preventDefault();
+            
+            if (confirm('Do you want to save this FIR? Click OK to save or Cancel to make changes.')) {
+                // Get form data
+                const crimeType = crimeTypeSelect.value;
+                const crimeDate = document.getElementById('crimeDate').value;
+                const crimeLocation = document.getElementById('crimeLocation').value;
+                const complainerName = document.getElementById('complainerName').value;
+                const complainerAadhar = document.getElementById('complainerAadhar').value;
+                const criminalName = document.getElementById('criminalName').value || 'Unknown';
+                
+                // Create new case
+                const newCase = {
+                    id: `CR-${new Date().getFullYear()}-${String(sampleCases.length + 1).padStart(3, '0')}`,
+                    type: crimeType,
+                    complainer: complainerName,
+                    criminal: criminalName,
+                    date_reported: new Date().toISOString().split('T')[0],
+                    status: 'Pending'
+                };
+                
+                try {
+                    await fetch('/api/cases', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newCase)
+                    });
+                    
+                    if (criminalName !== 'Unknown') {
+                        const newCriminal = {
+                            id: `CRIM-${new Date().getFullYear()}-${String(criminalRecordsData.length + 1).padStart(3, '0')}`,
+                            name: criminalName,
+                            crime: crimeType,
+                            status: 'Wanted',
+                            sentenceEnd: null,
+                            age: document.getElementById('criminalAge').value || null,
+                            gender: document.getElementById('criminalGender').value || null,
+                            occupation: document.getElementById('criminalOccupation').value || null,
+                            address: document.getElementById('criminalAddress').value || null,
+                            officer: currentUser || 'Unknown'
+                        };
+                        await fetch('/api/criminals', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newCriminal)
+                        });
+                    }
+                    
+                    await fetchAllData();
+                    updateDashboardStats();
+                    loadCasesTable();
+                    loadAllCasesTable();
+                    loadCriminalRecords();
+                    
+                    // Show success
+                    showNotification('FIR Registered', `FIR ${newCase.id} has been successfully registered.`, 'success');
+                    
+                    // Close modal and reset form
+                    closeModal(firModal);
+                    firForm.reset();
+                    applicableSection.textContent = 'Select crime type to see applicable section';
+                    
+                    // Update notification badge
+                    notificationCount++;
+                    notificationBadge.textContent = notificationCount;
+                    
+                    // Add activity
+                    addActivity(`New FIR registered: ${newCase.id}`);
+                } catch(err) {
+                    console.error(err);
+                }
+            }
+        }
+        
+        // Case Management Functions
+        function loadCasesTable() {
+            casesTableBody.innerHTML = '';
+            const recentCases = sampleCases.slice(0, 5);
+            
+            recentCases.forEach(caseItem => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${caseItem.id}</td>
+                    <td>${caseItem.type}</td>
+                    <td>${caseItem.complainer}</td>
+                    <td>${caseItem.date}</td>
+                    <td><span class="status-badge ${caseItem.status === 'Solved' ? 'status-solved' : 'status-pending'}">${caseItem.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-small btn-small-primary" onclick="viewCase('${caseItem.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn-small btn-small-danger" onclick="deleteCase('${caseItem.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </td>
+                `;
+                casesTableBody.appendChild(row);
+            });
+        }
+        
+        function loadAllCasesTable(data = sampleCases) {
+            allCasesTableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                allCasesTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">No cases found matching your criteria.</td></tr>';
+                return;
+            }
+
+            data.forEach(caseItem => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${caseItem.id}</td>
+                    <td>${caseItem.type}</td>
+                    <td>${caseItem.complainer}</td>
+                    <td>${caseItem.criminal}</td>
+                    <td>${caseItem.date}</td>
+                    <td><span class="status-badge ${caseItem.status === 'Solved' ? 'status-solved' : 'status-pending'}">${caseItem.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-small btn-small-primary" onclick="viewCase('${caseItem.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn-small btn-small-warning" onclick="toggleCaseStatus('${caseItem.id}')">
+                                <i class="fas fa-exchange-alt"></i> Status
+                            </button>
+                            <button class="btn-small btn-small-danger" onclick="deleteCase('${caseItem.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </td>
+                `;
+                allCasesTableBody.appendChild(row);
+            });
+        }
+        
+        function openFilterModal() {
+            // Populate crime types if empty
+            if (filterCrimeTypeSelect.options.length <= 1) {
+                Object.keys(crimeSections).sort().forEach(crime => {
+                    const option = document.createElement('option');
+                    option.value = crime;
+                    option.textContent = crime;
+                    filterCrimeTypeSelect.appendChild(option);
+                });
+            }
+            openModal(filterCasesModal);
+        }
+
+        function handleFilterSubmit(e) {
+            e.preventDefault();
+            
+            const idQuery = document.getElementById('filterCaseId').value.trim().toLowerCase();
+            const typeQuery = document.getElementById('filterCrimeType').value;
+            const nameQuery = document.getElementById('filterCriminalName').value.trim().toLowerCase();
+            const dateQuery = document.getElementById('filterDate').value;
+            const statusQuery = document.getElementById('filterStatus').value;
+            
+            const filteredCases = sampleCases.filter(caseItem => {
+                const matchId = !idQuery || caseItem.id.toLowerCase().includes(idQuery);
+                const matchType = !typeQuery || caseItem.type === typeQuery;
+                const matchName = !nameQuery || caseItem.criminal.toLowerCase().includes(nameQuery);
+                const matchDate = !dateQuery || caseItem.date === dateQuery;
+                const matchStatus = !statusQuery || caseItem.status === statusQuery;
+                
+                return matchId && matchType && matchName && matchDate && matchStatus;
+            });
+            
+            loadAllCasesTable(filteredCases);
+            closeModal(filterCasesModal);
+            showNotification('Filter Applied', `Found ${filteredCases.length} cases matching criteria.`, 'success');
+        }
+
+        function clearCaseFilters() {
+            document.getElementById('filterCasesForm').reset();
+            loadAllCasesTable(sampleCases);
+            closeModal(filterCasesModal);
+            showNotification('Filters Cleared', 'Showing all cases.', 'info');
+        }
+
+        function viewCase(caseId) {
+            const caseItem = sampleCases.find(c => c.id === caseId);
+            if (!caseItem) return;
+            
+            // Find linked criminal record
+            const criminal = criminalRecordsData.find(c => c.name === caseItem.criminal);
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            
+            let criminalHtml = '';
+            
+            if (criminal) {
+                // If criminal record exists, show full details panel
+                criminalHtml = `
+                    <div style="background: rgba(74, 144, 226, 0.1); padding: 20px; border-radius: 15px; border: 1px solid rgba(74, 144, 226, 0.3); margin-top: 20px;">
+                        <h4 style="color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                            <i class="fas fa-user-secret"></i> Criminal Details
+                        </h4>
+                        <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                                ${criminal.name.charAt(0)}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                                    <div>
+                                        <p style="font-size: 0.8rem; color: #aaa;">Name</p>
+                                        <p style="font-weight: 600; font-size: 1.1rem;">${criminal.name}</p>
+                                    </div>
+                                    <div>
+                                        <p style="font-size: 0.8rem; color: #aaa;">Record ID</p>
+                                        <p style="font-family: monospace;">${criminal.id}</p>
+                                    </div>
+                                    <div>
+                                        <p style="font-size: 0.8rem; color: #aaa;">Status</p>
+                                        <span class="status-badge ${getStatusClass(criminal.status)}">${criminal.status}</span>
+                                    </div>
+                                    <div>
+                                        <p style="font-size: 0.8rem; color: #aaa;">Details</p>
+                                        <p>${criminal.age ? `${criminal.age} yrs` : 'N/A'}, ${criminal.gender || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 15px;">
+                                    <p style="font-size: 0.8rem; color: #aaa;">Known Offenses</p>
+                                    <p>${criminal.crime}</p>
+                                </div>
+                                ${criminal.sentenceEnd ? `
+                                <div style="margin-top: 10px;">
+                                    <p style="font-size: 0.8rem; color: #aaa;">Sentence Ends</p>
+                                    <p>${criminal.sentenceEnd}</p>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; text-align: right;">
+                            <button class="btn-small btn-small-primary" onclick="this.closest('.modal').remove(); viewCriminalDetails('${criminal.id}')">
+                                <i class="fas fa-external-link-alt"></i> Open Full Record
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // If criminal is unknown or not in DB
+                criminalHtml = `
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 15px; margin-top: 20px; border: 1px dashed #666;">
+                        <h4 style="color: #aaa; margin-bottom: 10px;"><i class="fas fa-user-secret"></i> Criminal Information</h4>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 50px; height: 50px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666;">
+                                <i class="fas fa-question"></i>
+                            </div>
+                            <div>
+                                <p style="font-weight: 600; font-size: 1.1rem;">${caseItem.criminal}</p>
+                                <p style="font-size: 0.9rem; color: #888;">No detailed record found in the criminal database.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            modal.innerHTML = `
+                <div class="modal-content glass-transparent" style="max-width: 600px;">
+                    <span class="close-modal" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                    <h2>Case Details</h2>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <div>
+                            <span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-family: monospace;">${caseItem.id}</span>
+                            <h3 style="margin-top: 5px; color: var(--text-light);">${caseItem.type}</h3>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="status-badge ${caseItem.status === 'Solved' ? 'status-solved' : 'status-pending'}" style="font-size: 1rem; padding: 8px 16px;">${caseItem.status}</span>
+                            <p style="font-size: 0.8rem; color: #aaa; margin-top: 5px;">${caseItem.date}</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <p style="font-size: 0.85rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Complainer</p>
+                            <p style="font-size: 1.1rem; font-weight: 500;"><i class="fas fa-user"></i> ${caseItem.complainer}</p>
+                        </div>
+                        <div>
+                             <p style="font-size: 0.85rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Investigation</p>
+                             <p style="font-size: 0.9rem;">Assigned to: <span style="color: var(--primary);">Current Officer</span></p>
+                        </div>
+                    </div>
+
+                    ${criminalHtml}
+                    
+                    <div style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-primary" onclick="this.parentElement.parentElement.parentElement.remove()" style="width: auto; padding: 10px 25px;">Close Panel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.remove();
+                }
+            });
+        }
+        
+        async function deleteCase(caseId) {
+            if (confirm(`Are you sure you want to delete case ${caseId}? This action cannot be undone.`)) {
+                try {
+                    await fetch(`/api/cases/${caseId}`, { method: 'DELETE' });
+                    await fetchAllData();
+                    updateDashboardStats();
+                    loadCasesTable();
+                    loadAllCasesTable();
+                    showNotification('Case Deleted', `Case ${caseId} has been deleted.`, 'warning');
+                    addActivity(`Case deleted: ${caseId}`);
+                } catch(err) { console.error(err); }
+            }
+        }
+        
+        async function toggleCaseStatus(caseId) {
+            const caseItem = sampleCases.find(c => c.id === caseId);
+            if (!caseItem) return;
+            
+            const newStatus = caseItem.status === 'Pending' ? 'Solved' : 'Pending';
+            try {
+                await fetch(`/api/cases/${caseId}/status`, {
+                    method: 'PUT', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: newStatus })
+                });
+                await fetchAllData();
+                updateDashboardStats();
+                loadCasesTable();
+                loadAllCasesTable();
+                showNotification('Case Updated', `Case status changed to ${newStatus}.`, 'success');
+                addActivity(`Case status updated: ${caseId}`);
+            } catch(err) { console.error(err); }
+        }
+        
+        function filterCases() {
+            // Functionality moved to openFilterModal and handleFilterSubmit
+            openFilterModal(); 
+        }
+        
+        function exportCases() {
+            showNotification('Export Cases', 'Cases exported successfully. Download will start shortly.', 'success');
+            addActivity('Cases exported to CSV');
+        }
+        
+        // Criminal Records Functions
+        function loadCriminalRecords() {
+            criminalRecordsList.innerHTML = '';
+            const topCriminals = criminalRecordsData.slice(0, 4);
+            
+            topCriminals.forEach(criminal => {
+                const card = document.createElement('div');
+                card.className = 'criminal-card';
+                card.innerHTML = `
+                    <div class="criminal-header">
+                        <div class="criminal-avatar">${criminal.name.charAt(0)}</div>
+                        <div class="criminal-info">
+                            <h4>${criminal.name}</h4>
+                            <p>${criminal.id} • ${criminal.crime}</p>
+                            <p style="font-size: 0.8rem; color: var(--secondary); margin-top: 4px;"><i class="fas fa-user-shield"></i> Reg. by: ${criminal.officer || 'Unknown'}</p>
+                            <span class="status-badge ${getStatusClass(criminal.status)}">${criminal.status}</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 10px;">
+                            ${criminal.age ? `Age: ${criminal.age} • ` : ''}${criminal.gender || ''}
+                        </p>
+                        <div class="action-buttons">
+                            <button class="btn-small btn-small-primary" onclick="viewCriminalDetails('${criminal.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn-small btn-small-danger" onclick="deleteCriminalRecord('${criminal.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                criminalRecordsList.appendChild(card);
+            });
+        }
+        
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Incarcerated': return 'status-pending';
+                case 'Released': return 'status-solved';
+                case 'Wanted': return 'status-pending';
+                case 'Under Trial': return 'status-pending';
+                default: return 'status-pending';
+            }
+        }
+        
+        function viewCriminalDetails(criminalId) {
+            const criminal = criminalRecordsData.find(c => c.id === criminalId);
+            if (!criminal) return;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content glass-transparent">
+                    <span class="close-modal" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+                    <h2>Criminal Details</h2>
+                    <div style="margin-top: 20px;">
+                        <div style="display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap;">
+                            <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #4a90e2, #00c6ff); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
+                                ${criminal.name.charAt(0)}
+                            </div>
+                            <div style="flex: 1; min-width: 200px;">
+                                <h3 style="color: #4a90e2; margin-bottom: 10px;">${criminal.name}</h3>
+                                <p><strong>ID:</strong> ${criminal.id}</p>
+                                <p><strong>Crime:</strong> ${criminal.crime}</p>
+                                <p><strong>Status:</strong> <span class="status-badge ${getStatusClass(criminal.status)}">${criminal.status}</span></p>
+                                <p><strong>Sentence End:</strong> ${criminal.sentenceEnd || 'N/A'}</p>
+                                ${criminal.age ? `<p><strong>Age:</strong> ${criminal.age}</p>` : ''}
+                                ${criminal.gender ? `<p><strong>Gender:</strong> ${criminal.gender}</p>` : ''}
+                                ${criminal.occupation ? `<p><strong>Occupation:</strong> ${criminal.occupation}</p>` : ''}
+                                ${criminal.address ? `<p><strong>Address:</strong> ${criminal.address}</p>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(20,23,40,0.5); padding: 20px; border-radius: 10px; margin-top: 20px;">
+                            <h4 style="color: #00c6ff; margin-bottom: 10px;">Additional Information</h4>
+                            <p><strong>Registered Date:</strong> ${criminal.id.replace('CRIM-', '')}</p>
+                            <p><strong>Reporting Officer:</strong> ${criminal.officer || 'Unknown'}</p>
+                            <p><strong>Applicable Act:</strong> ${crimeSections[criminal.crime] || 'IPC Section 302'}</p>
+                            <p><strong>Last Updated:</strong> ${new Date().toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                    document.body.removeChild(this);
+                }
+            });
+        }
+        
+        async function deleteCriminalRecord(criminalId) {
+            if (confirm(`Are you sure you want to delete criminal record ${criminalId}? This action cannot be undone.`)) {
+                try {
+                    await fetch(`/api/criminals/${criminalId}`, { method: 'DELETE' });
+                    await fetchAllData();
+                    updateDashboardStats();
+                    loadCriminalRecords();
+                    showNotification('Record Deleted', `Criminal record ${criminalId} deleted.`, 'success');
+                    addActivity(`Criminal record deleted: ${criminalId}`);
+                } catch(err) { console.error(err); }
+            }
+        }
+        
+        function showAllCriminalsModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content modal-content-wide glass-transparent">
+                    <span class="close-modal" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+                    <h2>All Criminal Records</h2>
+                    <div style="overflow-x: auto; margin-top: 20px;">
+                        <table style="min-width: 700px;">
+                            <thead>
+                                <tr>
+                                    <th>Criminal ID</th>
+                                    <th>Name</th>
+                                    <th>Crime</th>
+                                    <th>Status</th>
+                                    <th>Sentence End</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${criminalRecordsData.map(criminal => `
+                                    <tr>
+                                        <td>${criminal.id}</td>
+                                        <td>${criminal.name}</td>
+                                        <td>${criminal.crime}</td>
+                                        <td><span class="status-badge ${getStatusClass(criminal.status)}">${criminal.status}</span></td>
+                                        <td>${criminal.sentenceEnd || 'N/A'}</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-small btn-small-primary" onclick="viewCriminalDetails('${criminal.id}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-small btn-small-danger" onclick="deleteCriminalRecord('${criminal.id}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                    document.body.removeChild(this);
+                }
+            });
+        }
+        
+        function filterCriminals() {
+            showNotification('Filter Criminals', 'Filter functionality would show filtering options in a real application.', 'info');
+        }
+        
+        function searchCriminalRecords() {
+            const query = searchCriminal.value.trim().toLowerCase();
+            if (!query) {
+                showNotification('Search Error', 'Please enter a search term.', 'warning');
+                return;
+            }
+            
+            const results = criminalRecordsData.filter(criminal => 
+                criminal.name.toLowerCase().includes(query) || 
+                criminal.id.toLowerCase().includes(query) ||
+                criminal.crime.toLowerCase().includes(query)
+            );
+            
+            if (results.length === 0) {
+                showNotification('Search Results', `No criminals found for "${query}"`, 'warning');
+            } else {
+                showNotification('Search Results', `Found ${results.length} criminal(s) matching "${query}"`, 'success');
+            }
+        }
+        
+        // Search Functions
+        function performGlobalSearch() {
+            const query = globalSearch.value.trim().toLowerCase();
+            if (!query) {
+                showNotification('Search Error', 'Please enter a search term.', 'warning');
+                return;
+            }
+            
+            const caseResults = sampleCases.filter(caseItem => 
+                caseItem.id.toLowerCase().includes(query) ||
+                caseItem.type.toLowerCase().includes(query) ||
+                caseItem.complainer.toLowerCase().includes(query) ||
+                caseItem.criminal.toLowerCase().includes(query)
+            ).length;
+            
+            const criminalResults = criminalRecordsData.filter(criminal => 
+                criminal.name.toLowerCase().includes(query) || 
+                criminal.id.toLowerCase().includes(query) ||
+                criminal.crime.toLowerCase().includes(query)
+            ).length;
+            
+            const officerResults = officersData.filter(officer => 
+                officer.name.toLowerCase().includes(query) || 
+                officer.id.toLowerCase().includes(query) ||
+                officer.department.toLowerCase().includes(query)
+            ).length;
+            
+            searchResults.innerHTML = `
+                <div style="background: rgba(20,23,40,0.5); padding: 20px; border-radius: 10px;">
+                    <h4>Search Results for "${query}"</h4>
+                    <div style="margin-top: 15px;">
+                        <p>🔍 <strong>Cases:</strong> ${caseResults} found</p>
+                        <p>👤 <strong>Criminals:</strong> ${criminalResults} found</p>
+                        <p>👮 <strong>Officers:</strong> ${officerResults} found</p>
+                    </div>
+                </div>
+            `;
+            
+            showNotification('Search Complete', `Found ${caseResults + criminalResults + officerResults} total results for "${query}"`, 'info');
+        }
+        
+        // Face Search Functions
+        function handleFaceSearch() {
+            showNotification('Face Search', 'Processing uploaded image...', 'info');
+            
+            setTimeout(() => {
+                faceSearchResults.innerHTML = `
+                    <div style="background: rgba(20,23,40,0.5); padding: 20px; border-radius: 10px;">
+                        <h4>Search Results</h4>
+                        <p>Found 2 potential matches in criminal database:</p>
+                        <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                            <div style="text-align: center;">
+                                <div style="width: 80px; height: 80px; background: #4a90e2; border-radius: 50%; margin: 0 auto 10px;"></div>
+                                <p style="font-size: 0.9rem;">Match: 87%<br>ID: CRIM-2022-045</p>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 80px; height: 80px; background: #00c6ff; border-radius: 50%; margin: 0 auto 10px;"></div>
+                                <p style="font-size: 0.9rem;">Match: 72%<br>ID: CRIM-2021-128</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                showNotification('Face Search Complete', 'Found 2 potential matches in criminal database.', 'success');
+                addActivity('Face search performed with 2 matches found');
+            }, 2000);
+        }
+        
+        // Officer Management Functions
+        function loadOfficersTable() {
+            officersTableBody.innerHTML = '';
+            
+            officersData.forEach(officer => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${officer.id}</td>
+                    <td>${officer.name}</td>
+                    <td>${officer.email}</td>
+                    <td><span class="status-badge ${officer.status === 'Active' ? 'status-active' : 'status-pending'}">${officer.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            
+                            <button class="btn-small ${officer.status === 'Active' ? 'btn-small-danger' : 'btn-small-success'}" onclick="toggleOfficerStatus('${officer.id}')">
+                                <i class="fas ${officer.status === 'Active' ? 'fa-user-slash' : 'fa-user-check'}"></i> ${officer.status === 'Active' ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </div>
+                    </td>
+                `;
+                officersTableBody.appendChild(row);
+            });
+        }
+        
+        function viewOfficer(officerId) {
+            const officer = officersData.find(o => o.id === officerId);
+            if (!officer) return;
+            
+            showNotification('Officer Details', `Viewing ${officer.name} (${officer.id}) from ${officer.department}`, 'info');
+        }
+        
+        async function toggleOfficerStatus(officerId) {
+            const officer = officersData.find(o => o.id === officerId);
+            if (!officer) return;
+            
+            const newStatus = officer.status === 'Active' ? 'Inactive' : 'Active';
+            try {
+                await fetch(`/api/officers/${officerId}/status`, {
+                    method: 'PUT', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: newStatus })
+                });
+                await fetchAllData();
+                loadOfficersTable();
+                showNotification('Officer Updated', `Officer ${newStatus}.`, 'success');
+                addActivity(`Officer ${newStatus}: ${officer.id}`);
+            } catch(err) { console.error(err); }
+        }
+        
+     function registerNewOfficer() {
+            if (userType !== 'admin') {
+                showNotification('Access Denied', 'Only administrators can register new officers.', 'danger');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            
+            // Multiple Selection ke liye Checkboxes ka HTML structure
+            modal.innerHTML = `
+                <div class="modal-content glass-transparent" style="max-width: 500px;">
+                    <span class="close-modal" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+                    <h2>Register New Officer</h2>
+                    <form id="newOfficerForm" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label for="newOfficerName">User Name *</label>
+                            <input type="text" id="newOfficerName" placeholder="Enter User name" required style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newOfficerEmail">Email Address *</label>
+                            <input type="email" id="newOfficerEmail" placeholder="Enter officer's email" required style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newOfficerPassword">Set Password *</label>
+                            <input type="password" id="newOfficerPassword" placeholder="Create login password" required style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label style="margin-bottom: 10px; display: block;">Authority / Permissions (Select Multiple) *</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: rgba(20, 23, 40, 0.5); padding: 15px; border-radius: 10px; border: 1px solid rgba(100, 100, 150, 0.5); max-height: 200px; overflow-y: auto;">
+                                
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="All Access" style="width: auto;"> All Access (Admin)
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="See All Data" style="width: auto;"> See All Data
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="Register FIR" style="width: auto;"> Register FIR
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="Edit/Update" style="width: auto;"> Edit/Update Cases
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="Delete Files" style="width: auto;"> Delete Files
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="Secure Chat" style="width: auto;"> Allow Secure Chat
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="Manage Criminals" style="width: auto;"> Manage Criminals
+                                </label>
+
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox" name="officerAuth" value="Export Reports" style="width: auto;"> Export Data
+                                </label>
+                            </div>
+                            <small style="color: #aaa; margin-top: 5px;">* Select at least one permission.</small>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 200px;">Register Officer</button>
+                            <button type="button" class="btn btn-danger" onclick="this.parentElement.parentElement.parentElement.parentElement.style.display='none'" style="flex: 1; min-width: 200px;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                    document.body.removeChild(this);
+                }
+            });
+            
+            // Handle Form Submission
+            const newOfficerForm = document.getElementById('newOfficerForm');
+            const newFormClone = newOfficerForm.cloneNode(true);
+            newOfficerForm.parentNode.replaceChild(newFormClone, newOfficerForm);
+
+            newFormClone.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Get all checked checkboxes
+                const checkboxes = document.querySelectorAll('input[name="officerAuth"]:checked');
+                
+                // Validation: Check if at least one is selected
+                if (checkboxes.length === 0) {
+                    alert("Please select at least one authority/permission.");
+                    return;
+                }
+
+                const officerName = document.getElementById('newOfficerName').value;
+                const officerEmail = document.getElementById('newOfficerEmail').value;
+                const officerPassword = document.getElementById('newOfficerPassword').value;
+                
+                // Convert checked values to a comma-separated string
+                let selectedAuths = [];
+                checkboxes.forEach((checkbox) => {
+                    selectedAuths.push(checkbox.value);
+                });
+                const authString = selectedAuths.join(', ');
+                
+                const newOfficer = {
+                    id: `OFC-${String(officersData.length + 1).padStart(3, '0')}`,
+                    name: officerName,
+                    email: officerEmail,
+                    password: officerPassword,
+                    department: authString, // Storing permissions in the department field for display
+                    status: 'Active',
+                    role: 'Officer'
+                };
+                
+                try {
+                    await fetch('/api/officers', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(newOfficer)
+                    });
+                    
+                    await fetchAllData();
+                    loadOfficersTable();
+                    
+                    showNotification('Officer Registered', `Officer ${officerName} added`, 'success');
+                    addActivity(`New officer registered: ${newOfficer.id}`);
+                    
+                    modal.style.display = 'none';
+                    document.body.removeChild(modal);
+                } catch(err) { console.error(err); }
+            });
+        }
+        
+        // Login History Functions
+        function loadLoginHistory() {
+            loginHistoryTable.innerHTML = loginHistoryData.map(entry => `
+                <tr>
+                    <td>${entry.user}</td>
+                    <td>${entry.type}</td>
+                    <td>${entry.login}</td>
+                    <td>${entry.logout}</td>
+                    <td>${entry.ip}</td>
+                    <td><span class="status-badge ${entry.status === 'Success' ? 'status-solved' : 'status-pending'}">${entry.status}</span></td>
+                </tr>
+            `).join('');
+        }
+        
+        // Settings Functions
+        function saveSettings() {
+            showNotification('Settings Saved', 'System settings have been updated successfully.', 'success');
+            addActivity('System settings updated');
+        }
+        
+        // Analytics Functions
+        function initPredictiveChart() {
+            const crimeTypes = ['Theft', 'Assault', 'Fraud', 'Burglary', 'Cybercrime'];
+            const predictions = [65, 40, 35, 30, 55];
+            
+            predictiveChart.innerHTML = '';
+            
+            crimeTypes.forEach((type, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = `${predictions[index]}%`;
+                bar.innerHTML = `<span>${type}<br>${predictions[index]}%</span>`;
+                predictiveChart.appendChild(bar);
+            });
+        }
+        
+        // Report Functions
+        function handleGenerateReport() {
+            showNotification('Report Generated', 'Analytical report has been generated and downloaded.', 'success');
+            addActivity('Analytical report generated');
+        }
+        
+        // Dashboard Functions
+        function updateDashboardStats() {
+            const total = sampleCases.length;
+            const pending = sampleCases.filter(c => c.status === 'Pending').length;
+            const solved = sampleCases.filter(c => c.status === 'Solved').length;
+            const criminals = criminalRecordsData.length;
+            
+            totalCases.textContent = total;
+            pendingCases.textContent = pending;
+            solvedCases.textContent = solved;
+            criminalRecords.textContent = criminals;
+        }
+        
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            currentDateTime.textContent = `${dateStr} • ${timeStr}`;
+        }
+        
+        function startClock() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        }
+        
+        function checkExpiredRecords() {
+            const today = new Date().toISOString().split('T')[0];
+            let deletedCount = 0;
+            
+            for (let i = criminalRecordsData.length - 1; i >= 0; i--) {
+                const record = criminalRecordsData[i];
+                if (record.sentenceEnd && record.sentenceEnd < today && record.status === 'Released') {
+                    criminalRecordsData.splice(i, 1);
+                    deletedCount++;
+                }
+            }
+            
+            if (deletedCount > 0) {
+                showNotification('Automatic Cleanup', `${deletedCount} criminal record(s) automatically deleted after sentence completion.`, 'warning');
+                updateDashboardStats();
+                loadCriminalRecords();
+            }
+        }
+        
+        function addActivity(description) {
+            const activityFeed = document.getElementById('activityFeed');
+            const activityItem = document.createElement('div');
+            activityItem.className = 'activity-item';
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            activityItem.innerHTML = `
+                <div class="activity-icon">
+                    <i class="fas fa-info-circle" style="color: #4a90e2;"></i>
+                </div>
+                <div class="activity-content">
+                    <p>${description}</p>
+                    <span>${time} • Just now</span>
+                </div>
+            `;
+            
+            activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+            
+            // Keep only 5 activities
+            while (activityFeed.children.length > 5) {
+                activityFeed.removeChild(activityFeed.lastChild);
+            }
+        }
+        
+        // Notification Functions
+        function showNotification(title, message, type = 'info') {
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            
+            notification.className = 'notification';
+            if (type === 'warning') {
+                notification.classList.add('notification-warning');
+            } else if (type === 'danger') {
+                notification.classList.add('notification-danger');
+            } else if (type === 'success') {
+                notification.classList.add('notification-success');
+            }
+            
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showNotifications() {
+            notificationCount = 0;
+            notificationBadge.textContent = notificationCount;
+            showNotification('Notifications', 'You have no unread notifications.', 'info');
+        }
+        
+        // Chatbot Functions
+        // ============================================
+        // INTELLIGENT CHATBOT LOGIC (Fully Trained)
+        // ============================================
+
+        function toggleChatbot() {
+            const window = document.getElementById('chatbotWindow');
+            window.style.display = window.style.display === 'flex' ? 'none' : 'flex';
+            if(window.style.display === 'flex') {
+                document.getElementById('chatbotInput').focus();
+            }
+        }
+        
+        function sendChatMessage() {
+            const inputField = document.getElementById('chatbotInput');
+            const message = inputField.value.trim();
+            if (!message) return;
+            
+            // User Message Add kar raha hu
+            addChatMessage(message, 'user');
+            inputField.value = '';
+            
+            // Bot typing effect (Thoda delay taaki real lage)
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message';
+            typingDiv.innerHTML = '<i>Typing...</i>';
+            typingDiv.id = 'botTyping';
+            document.getElementById('chatbotMessages').appendChild(typingDiv);
+            document.getElementById('chatbotMessages').scrollTop = document.getElementById('chatbotMessages').scrollHeight;
+
+            setTimeout(() => {
+                // Typing hatana
+                const typingEl = document.getElementById('botTyping');
+                if(typingEl) typingEl.remove();
+
+                // Smart Response Lana
+                const botResponse = getSmartBotResponse(message);
+                addChatMessage(botResponse, 'bot');
+            }, 800); // 0.8 second delay
+        }
+        
+        function addChatMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            // Allow HTML in bot messages for formatting
+            messageDiv.innerHTML = text; 
+            const chatContainer = document.getElementById('chatbotMessages');
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // --- BRAIN OF THE BOT (Training Data) ---
+        function getSmartBotResponse(input) {
+            const text = input.toLowerCase();
+
+            // 1. FIR REGISTRATION GUIDE
+            if (text.includes('fir') || text.includes('register') || text.includes('complaint') || text.includes('case file')) {
+                return `<b>To Register a New FIR:</b><br>
+                        1. Go to the <b>'Register FIR'</b> section in the sidebar.<br>
+                        2. Or click the 'Register FIR' card on Dashboard.<br>
+                        3. Select 'Crime Type' & fill Incident Details.<br>
+                        4. Enter Complainer & Criminal info.<br>
+                        5. Click <b>'Register FIR'</b> to save/submit.`;
+            }
+            
+            // 2. OFFICER REGISTRATION (Admin Only)
+            else if (text.includes('officer') || text.includes('add user') || text.includes('new staff') || text.includes('permission')) {
+                if (userType !== 'admin') {
+                    return `<b>Access Restricted:</b> Only Administrators can register new officers. Please contact your superior.`;
+                }
+                return `<b>To Register a New Officer:</b><br>
+                        1. Navigate to <b>'Officer Management'</b> section.<br>
+                        2. Click on the <b>'Register Officer'</b> button.<br>
+                        3. Enter Name, Email, and set a Password.<br>
+                        4. <b>Important:</b> Select all applicable <b>Permissions/Authority</b> (e.g., Register FIR, Secure Chat).<br>
+                        5. Click Register.`;
+            }
+
+            // 3. SECURE CHAT / COMMUNICATION
+            else if (text.includes('chat') || text.includes('call') || text.includes('sms') || text.includes('email') || text.includes('contact')) {
+                return `<b>Using Secure Chat Network:</b><br>
+                        1. Go to <b>'Secure Chat'</b> in the sidebar.<br>
+                        2. Search for the Police Station (e.g., Mumbai HQ).<br>
+                        3. Use the buttons provided:<br>
+                        &nbsp; <i class="fas fa-phone"></i> <b>Call:</b> Secure encrypted voice line.<br>
+                        &nbsp; <i class="fas fa-comment-alt"></i> <b>SMS:</b> Send classified text.<br>
+                        &nbsp; <i class="fas fa-envelope"></i> <b>Email:</b> Send official mail with priority.`;
+            }
+
+            // 4. SEARCH & FACE RECOGNITION
+            else if (text.includes('search') || text.includes('find') || text.includes('face') || text.includes('photo')) {
+                return `<b>How to Search Records:</b><br>
+                        - <b>Global Search:</b> Use the top bar in 'Search Section' to find Cases, Criminals, or Officers by name/ID.<br>
+                        - <b>Face Search:</b> Go to Search Section > Click 'Face Recognition Area' > Upload suspect's photo to match with database.`;
+            }
+
+            // 5. CRIMINAL RECORDS
+            else if (text.includes('criminal') || text.includes('history') || text.includes('record') || text.includes('delete')) {
+                return `<b>Managing Criminal Records:</b><br>
+                        - Go to <b>'Criminals'</b> section to view the full database.<br>
+                        - Use <b>'View'</b> to see detailed history & sentence status.<br>
+                        - Use <b>'Delete'</b> to remove a record (Admin/Authorized only).<br>
+                        - Records with completed sentences are auto-deleted if enabled in Settings.`;
+            }
+
+            // 6. SETTINGS & CONFIG
+            else if (text.includes('setting') || text.includes('password') || text.includes('dark mode') || text.includes('auto delete')) {
+                return `<b>System Settings:</b><br>
+                        Navigate to the <b>'Settings'</b> tab to manage:<br>
+                        - Auto-Delete expired criminal records.<br>
+                        - Email Notifications.<br>
+                        - 2-Factor Authentication (Security).<br>
+                        - Real-time Alert popups.`;
+            }
+
+            // 7. GREETINGS & GENERAL
+            else if (text.includes('hello') || text.includes('hi') || text.includes('hey')) {
+                return `Hello Officer! 👋<br>I am your CRMS Guide. Ask me anything like:<br>
+                        - "How to file FIR?"<br>
+                        - "How to use Secure Chat?"<br>
+                        - "How to add a new officer?"`;
+            }
+            
+            else if (text.includes('who are you') || text.includes('your name')) {
+                return `I am the <b>CRMS AI Assistant</b>. I am fully integrated with this dashboard to help you navigate and manage crime reports efficiently.`;
+            }
+
+            // DEFAULT FALLBACK
+            else {
+                return `I'm not sure about that. Try asking about:<br>
+                        - <b>FIR Registration</b><br>
+                        - <b>Officer Management</b><br>
+                        - <b>Secure Chat</b><br>
+                        - <b>Searching Records</b>`;
+            }
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        // Make functions available globally for onclick handlers
+        window.viewCase = viewCase;
+        window.deleteCase = deleteCase;
+        window.toggleCaseStatus = toggleCaseStatus;
+        window.viewCriminalDetails = viewCriminalDetails;
+        window.deleteCriminalRecord = deleteCriminalRecord;
+        window.viewOfficer = viewOfficer;
+        window.toggleOfficerStatus = toggleOfficerStatus;
+        
+        // Initialize the system
+        updateDashboardStats();
+        loadCasesTable();
+        loadAllCasesTable();
+        loadCriminalRecords();
+        loadOfficersTable();
+        loadLoginHistory();
+        initPredictiveChart();
+        
+        // Show welcome message after load
+        setTimeout(() => {
+            showNotification('System Ready', 'Crime Report Management System is fully loaded and ready.', 'success');
+        }, 1000);
+    </script>
+</body>
+</html>

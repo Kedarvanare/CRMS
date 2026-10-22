@@ -1,0 +1,33 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Java / Maven
+target/
+backend/target/
+*.class
+backend/apache-maven-3.9.6/
+
+# SQLite / Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs
+*.log
+error.log
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+.settings/
+.project
+.classpath
+
+# OS files
+Thumbs.db
+.DS_Store
