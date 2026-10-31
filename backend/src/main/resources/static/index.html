@@ -1908,6 +1908,28 @@
         let userType = null;
         let userInitial = 'A';
         let notificationCount = 3;
+        let authToken = sessionStorage.getItem('crms_token') || null;
+
+        // Centralized fetch interceptor: automatically attaches JWT Bearer token to all /api/ calls
+        const originalFetch = window.fetch;
+        window.fetch = async function (url, options = {}) {
+            options = options || {};
+            options.headers = options.headers || {};
+            if (typeof url === 'string' && url.startsWith('/api/') && authToken) {
+                if (options.headers instanceof Headers) {
+                    if (!options.headers.has('Authorization')) {
+                        options.headers.set('Authorization', 'Bearer ' + authToken);
+                    }
+                } else if (Array.isArray(options.headers)) {
+                    options.headers.push(['Authorization', 'Bearer ' + authToken]);
+                } else {
+                    if (!options.headers['Authorization']) {
+                        options.headers['Authorization'] = 'Bearer ' + authToken;
+                    }
+                }
+            }
+            return originalFetch(url, options);
+        };
 
         const pageTitles = {
             'dashboard-section': { title: 'Dashboard Overview', icon: 'fa-tachometer-alt' },
@@ -2112,6 +2134,8 @@
                 const data = await res.json();
 
                 if (data.success && data.user.role === 'Admin') {
+                    authToken = data.token;
+                    sessionStorage.setItem('crms_token', authToken);
                     currentUser = data.user.name;
                     userType = 'admin';
                     userInitial = data.user.name.charAt(0);
@@ -2148,6 +2172,8 @@
                         showNotification('Account Locked', 'Your account is deactivated. Contact Admin.', 'danger');
                         return;
                     }
+                    authToken = data.token;
+                    sessionStorage.setItem('crms_token', authToken);
                     currentUser = `${officer.name} (${officer.id})`;
                     userType = 'officer';
                     userInitial = officer.name.charAt(0).toUpperCase();
@@ -2211,6 +2237,8 @@
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('sidebar').classList.remove('show');
             showNotification('Logged Out', 'You have been successfully logged out.', 'success');
+            authToken = null;
+            sessionStorage.removeItem('crms_token');
             currentUser = null;
             userType = null;
             notificationCount = 3;

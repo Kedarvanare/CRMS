@@ -41,24 +41,28 @@ Configured in `backend/src/main/resources/application.properties`:
 
 ---
 
-## REST Endpoints Implemented
+## REST Endpoints & Security
+All `/api/**` endpoints (except `/api/login` and `/api/login-history` audit logging) are secured with **JWT (JSON Web Token)** authentication. Send the token in the `Authorization` HTTP header:
+```http
+Authorization: Bearer <your_jwt_token>
+```
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/login` | Authenticate Admin or Officer |
-| `GET` | `/api/cases` | List all cases sorted by created_at DESC |
-| `POST` | `/api/cases` | Register a new case/FIR |
-| `PUT` | `/api/cases/{id}/status` | Update case status (Pending / Solved) |
-| `DELETE` | `/api/cases/{id}` | Delete case |
-| `GET` | `/api/criminals` | List all criminals sorted by created_at DESC |
-| `POST` | `/api/criminals` | Add new criminal record |
-| `DELETE` | `/api/criminals/{id}` | Delete criminal record |
-| `GET` | `/api/officers` | List all officers sorted by created_at DESC |
-| `POST` | `/api/officers` | Add new officer |
-| `PUT` | `/api/officers/{id}/status` | Update officer status (Active / Inactive) |
-| `GET` | `/api/login-history` | Get recent 50 login attempts |
-| `POST` | `/api/login-history` | Log login audit entry |
-| `GET` | `/*` | Single-page application serving `index.html` |
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/login` | Public | Authenticate Admin or Officer & receive JWT token |
+| `GET` | `/api/cases` | Authenticated | List all cases sorted by created_at DESC |
+| `POST` | `/api/cases` | Authenticated | Register a new case/FIR |
+| `PUT` | `/api/cases/{id}/status` | Authenticated | Update case status (Pending / Solved) |
+| `DELETE` | `/api/cases/{id}` | Authenticated | Delete case |
+| `GET` | `/api/criminals` | Authenticated | List all criminals sorted by created_at DESC |
+| `POST` | `/api/criminals` | Authenticated | Add new criminal record |
+| `DELETE` | `/api/criminals/{id}` | Authenticated | Delete criminal record |
+| `GET` | `/api/officers` | Authenticated | List all officers sorted by created_at DESC |
+| `POST` | `/api/officers` | Authenticated | Add new officer |
+| `PUT` | `/api/officers/{id}/status` | Authenticated | Update officer status (Active / Inactive) |
+| `GET` | `/api/login-history` | Authenticated | Get recent 50 login attempts |
+| `POST` | `/api/login-history` | Public | Log login audit entry |
+| `GET` | `/*` | Public | Single-page application serving `index.html` |
 
 ---
 

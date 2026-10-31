@@ -5,6 +5,7 @@ import com.crms.backend.model.Admin;
 import com.crms.backend.model.Officer;
 import com.crms.backend.repository.AdminRepository;
 import com.crms.backend.repository.OfficerRepository;
+import com.crms.backend.security.JwtUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +21,12 @@ public class AuthController {
 
     private final AdminRepository adminRepository;
     private final OfficerRepository officerRepository;
+    private final JwtUtils jwtUtils;
 
-    public AuthController(AdminRepository adminRepository, OfficerRepository officerRepository) {
+    public AuthController(AdminRepository adminRepository, OfficerRepository officerRepository, JwtUtils jwtUtils) {
         this.adminRepository = adminRepository;
         this.officerRepository = officerRepository;
+        this.jwtUtils = jwtUtils;
     }
 
     @PostMapping("/login")
@@ -43,7 +46,10 @@ public class AuthController {
                     userData.put("role", "Admin");
                     userData.put("email", admin.getEmail());
 
+                    String token = jwtUtils.generateToken(admin.getEmail(), "Admin", admin.getName());
+
                     response.put("success", true);
+                    response.put("token", token);
                     response.put("user", userData);
                     return ResponseEntity.ok(response);
                 } else {
@@ -63,7 +69,10 @@ public class AuthController {
                     userData.put("status", officer.getStatus());
                     userData.put("role", "Officer");
 
+                    String token = jwtUtils.generateToken(officer.getEmail(), "Officer", officer.getName());
+
                     response.put("success", true);
+                    response.put("token", token);
                     response.put("user", userData);
                     return ResponseEntity.ok(response);
                 } else {
